@@ -1,0 +1,15 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Firebase browser configuration identifier, not an authorization credential; Auth and Rules enforce access"
+condition = "AND"
+paths = ['''^web/\.env\.demo$''']
+regexes = ['''AIzaSyDKk3wx9Ob-OhenALkVG8Pef5oEgQlD4XE''']
+
+[[allowlists]]
+description = "Literal document path in an authorization denial test, not a password or API key"
+condition = "AND"
+paths = ['''^scripts/demo-password-rules\.emulator\.test\.mjs$''']
+regexTarget = "line"
+regexes = ['''organizations/consubanco/members/password-rules-new''']

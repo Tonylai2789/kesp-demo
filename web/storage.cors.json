@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "https://kesp-demo-tonylai2789.web.app",
+      "https://kesp-demo-tonylai2789.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Content-Range", "ETag"],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+const root = path.resolve(import.meta.dirname, '..');
+const target = 'kesp-demo-tonylai2789';
+const config = JSON.parse(fs.readFileSync(path.join(root, 'web/.firebaserc'), 'utf8'));
+assert(Object.values(config.projects).every(value => value === target), 'Non-demo Firebase alias');
+const assets = fs.readdirSync(path.join(root, 'web/dist/assets')).filter(file => file.endsWith('.js'));
+const text = assets.map(file => fs.readFileSync(path.join(root, 'web/dist/assets', file), 'utf8')).join('\n');
+assert(text.includes(target), 'Missing demo project in build');
+assert(text.includes(`${target}.firebaseapp.com`), 'Missing demo Auth domain');
+assert(!/sales-banking-agent|sales-feedback-agent|kesp-arvo/.test(text), 'Bank project/bucket reference in browser build');
+console.log('Demo-only Firebase build verified.');

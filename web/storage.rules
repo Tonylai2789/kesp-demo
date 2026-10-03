@@ -1,0 +1,86 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function member() {
+      return firestore.get(/databases/(default)/documents/organizations/consubanco/members/$(request.auth.uid)).data;
+    }
+    function isDemoIdentity() {
+      return (request.auth.uid == 'kesp-demo-supervisor'
+          && request.auth.token.email == 'demo-supervisor@kesp-demo.invalid'
+          && request.auth.token.firebase.sign_in_provider == 'password')
+        || (request.auth.uid != 'kesp-demo-supervisor'
+          && request.auth.token.email_verified == true
+          && request.auth.token.firebase.sign_in_provider == 'google.com'
+          && request.auth.token.email in ['tonylai2789@gmail.com', 'logitech2789@gmail.com']);
+    }
+    function authenticated() {
+      return bucket == 'kesp-demo-tonylai2789.firebasestorage.app'
+        && request.auth != null
+        && isDemoIdentity()
+        // Storage allows two Firestore reads: live member plus reservation/call.
+        // Revoke the live membership to revoke existing audio access as well.
+        && member().uid == request.auth.uid
+        && member().email == request.auth.token.email
+        && member().organizationId == 'consubanco'
+        && member().get('accessEnabled', true) == true
+        && member().role in ['admin', 'supervisor']
+        && (request.auth.uid != 'kesp-demo-supervisor'
+          || (member().role == 'supervisor' && member().accessEnabled == true));
+    }
+    function staff() {
+      return authenticated() && member().role in ['admin', 'supervisor'];
+    }
+    match /prepared-uploads/{uid}/{callId}/{filename} {
+      function authorizedCreation() {
+        let prepared = firestore.get(/databases/(default)/documents/manual_upload_requests/$(callId)).data;
+        return (prepared.callFields.transcriptionComparison == false || member().role == 'admin')
+          && prepared.ownerUid == uid && prepared.callId == callId
+          && prepared.status == 'prepared' && prepared.expiresAt > request.time
+          && prepared.bucket == bucket
+          && prepared.originalFilename == filename
+          && prepared.storagePath == 'prepared-uploads/' + uid + '/' + callId + '/' + filename
+          && request.resource.size == prepared.sizeBytes
+          && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024
+          && request.resource.contentType == prepared.contentType
+          && request.resource.contentType.matches('audio/.*');
+      }
+      function authorizedPlayback() {
+        let call = firestore.get(/databases/(default)/documents/calls/$(callId)).data;
+        return call.audioStorageBucket == bucket
+          && call.audioPath == 'prepared-uploads/' + uid + '/' + callId + '/' + filename
+          && ((staff() && (call.uploadedBy == request.auth.uid
+            || (call.get('reviewerUserIds', []) is list && request.auth.uid in call.get('reviewerUserIds', []))
+            || (call.get('organizationId', '') == 'consubanco' && call.get('visibilityScope', '') == 'organization')))
+            || (member().role == 'agent' && call.get('organizationId', '') == 'consubanco'
+              && call.get('visibilityScope', '') == 'organization' && call.salesAgentId == member().salesAgentId));
+      }
+      allow create: if staff() && request.auth.uid == uid && resource == null && authorizedCreation();
+      allow get: if authenticated() && authorizedPlayback();
+      allow list, update, delete: if false;
+    }
+    // Optional iteration attachments retain reservation binding and never grant anonymous access.
+    match /iteration-requests/{uid}/{requestId}/{attachmentId}/{filename} {
+      function authorizedCreation() {
+        let prepared = firestore.get(/databases/(default)/documents/iteration_request_uploads/$(attachmentId)).data;
+        return prepared.ownerUid == uid && prepared.requestId == requestId && prepared.attachmentId == attachmentId
+          && prepared.status == 'prepared' && prepared.expiresAt > request.time
+          && prepared.bucket == bucket && prepared.name == filename
+          && prepared.path == 'iteration-requests/' + uid + '/' + requestId + '/' + attachmentId + '/' + filename
+          && request.resource.size == prepared.sizeBytes && request.resource.size > 0
+          && request.resource.size <= 25 * 1024 * 1024 && request.resource.contentType == prepared.contentType;
+      }
+      function authorizedRead() {
+        let root = firestore.get(/databases/(default)/documents/iteration_requests/$(requestId)).data;
+        return root.ownerUid == request.auth.uid || (member().role == 'admin'
+          && root.status in ['submitted', 'clarification_requested', 'approved', 'rejected']);
+      }
+      allow create: if staff() && request.auth.uid == uid && resource == null && authorizedCreation();
+      allow get: if staff() && authorizedRead();
+      allow list, update, delete: if false;
+    }
+    // No legacy audio upload, bucket-wide reads, list access or client mutation of seeded objects.
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

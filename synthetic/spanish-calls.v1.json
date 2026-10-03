@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "language": "es-MX",
+  "synthetic": true,
+  "agent": { "id": "demo_lucia_modelo", "name": "Lucía Modelo", "organizationLabel": "KESP Demo" },
+  "calls": [
+    {
+      "id": "lunes-01",
+      "weekday": 0,
+      "hour": 10,
+      "title": "Escucha y cierre con siguiente paso",
+      "performance": "good",
+      "coachingFocus": ["Exploración de necesidad", "Confirmación de comprensión", "Seguimiento acordado"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buen día, soy Lucía Modelo, asesora de KESP Demo. ¿Tengo el gusto de hablar con Cliente Alfa? El motivo es conocer si le interesa información general sobre una alternativa de crédito. No le pediré contraseñas ni datos de su cuenta. ¿Dispone de unos minutos?"},
+        {"speaker":"customer","text":"Sí, soy Cliente Alfa. Tengo un momento, pero prefiero dejar claro que no quiero contratar nada hoy. Estoy comparando alternativas para organizar un proyecto personal. Me preocupa principalmente comprometer un pago que después no pueda sostener. En otras llamadas me hablan muy rápido y termino sin entender cuánto tiempo tendría que pagar."},
+        {"speaker":"agent","text":"Gracias por explicarlo. Hoy podemos concentrarnos en entender sus prioridades, sin iniciar ninguna contratación. Por lo que dice, le importa que el pago sea manejable y conocer la duración completa. ¿Qué le ayudaría más a comparar: revisar el costo total, entender cómo cambia el plazo o saber qué preguntas debe hacer antes de aceptar una oferta?"},
+        {"speaker":"customer","text":"Me ayudaría entender esas diferencias. Un pago pequeño parece atractivo, pero sospecho que un plazo largo puede hacer que termine pagando más. No tengo una cifra definida y no quiero compartir información financiera durante esta llamada. Preferiría recibir una explicación clara que pueda revisar con calma y luego decidir si hago más preguntas."},
+        {"speaker":"agent","text":"Es una precaución razonable. Un pago menor no demuestra por sí mismo que una opción sea más económica; hay que comparar plazo, tasa, comisiones y costo total en una propuesta formal. Aquí no tengo una oferta aprobada ni puedo garantizar condiciones. Podemos revisar una guía informativa sin datos personales y dejar cualquier decisión para después."},
+        {"speaker":"customer","text":"Así sí me interesa. Si la guía distingue entre información general y una oferta real, la puedo revisar. También quisiera saber qué ocurre si tengo dudas sobre alguna comisión. No quiero que una solicitud de información se interprete como aceptación. Me sirve que me diga cuál sería el siguiente paso, sin que me presionen."},
+        {"speaker":"agent","text":"De acuerdo. Solicitar información no equivale a contratar y cualquier condición tendría que verificarse por el canal oficial correspondiente. Resumo: desea comparar costo total y plazo, sin proporcionar datos financieros ni aceptar hoy. Dejaremos una consulta informativa para el jueves a las diez de la mañana dentro de este ejercicio. ¿Ese horario y ese propósito le parecen correctos?"},
+        {"speaker":"customer","text":"Sí, el jueves a las diez está bien. Revisaré primero la explicación y anotaré mis preguntas sobre comisiones y duración. Entiendo que no hay un crédito aprobado ni una contratación. Gracias por respetar que todavía estoy comparando; con un siguiente paso tan concreto me resulta más fácil decidir si continúo después."}
+      ]
+    },
+    {
+      "id": "lunes-02",
+      "weekday": 0,
+      "hour": 15,
+      "title": "Promesa indebida y falta de escucha",
+      "performance": "poor",
+      "coachingFocus": ["Evitar garantías no sustentadas", "Escuchar objeciones", "Cierre sin presión"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Hola, le habla Lucía Modelo de KESP Demo. Estoy llamando porque tenemos una oportunidad de crédito que le conviene mucho. Cliente Beta, podemos avanzar ahora mismo; con estas opciones casi siempre queda todo aprobado. Solo necesito que me confirme que quiere aprovecharla antes de terminar la llamada."},
+        {"speaker":"customer","text":"Espere, no he solicitado nada y no sé de qué oportunidad habla. Estoy ocupado y no puedo decidir ahora. Me preocupa que me digan que algo está aprobado sin haber revisado mi situación. ¿Podría explicarme primero cuál es el propósito de la llamada y si escuchar información me compromete a continuar con algún trámite?"},
+        {"speaker":"agent","text":"La idea es facilitarle las cosas, no complicarlas con tantos detalles. Si dejamos pasar el momento, quizá después no tengamos lo mismo. Yo le diría que sí le va a convenir y que no habrá ningún problema con la aprobación. Ya más adelante se revisan los papeles. Lo importante es que aproveche mientras estamos hablando."},
+        {"speaker":"customer","text":"Eso no responde mi pregunta. No puedo saber si me conviene sin conocer condiciones y costos. Tampoco quiero que se genere una solicitud a mi nombre. Solo podría escuchar una explicación general en otro momento. Si usted insiste en que confirme algo hoy, prefiero que terminemos la llamada y no sigamos con este tema."},
+        {"speaker":"agent","text":"Pero una explicación demasiado larga tampoco le ayudaría. Todo mundo busca que el pago sea fácil, y por eso le comento esta posibilidad. Podemos poner que usted está interesado y luego se resuelven las dudas. No le estoy pidiendo una decisión tan complicada. Piense que sería una lástima perder algo que seguramente le sirve."},
+        {"speaker":"customer","text":"Mi duda no es si el pago suena fácil. Quiero saber cuánto costaría en total y por cuánto tiempo. Además, ya le dije que hoy no tengo espacio para revisar nada. Me incomoda que se asuma mi interés. Por favor, no registre una aceptación y no me dé por hecho una aprobación que no existe."},
+        {"speaker":"agent","text":"Está bien, entonces lo dejamos pendiente. Tal vez le marque otro día para ver si cambió de opinión. No tengo una fecha exacta porque depende de cómo se vaya moviendo la agenda. Usted piénselo y tenga a la mano lo que normalmente le solicitan. Si volvemos a hablar, intentamos avanzar más rápido para no perder tiempo."},
+        {"speaker":"customer","text":"No acordamos una nueva llamada ni autorizo una solicitud. Me quedo sin entender los costos y con la impresión de que se me quiso presionar. Si más adelante necesito información, buscaré un canal oficial por mi cuenta. Por ahora le pido que cierre esta conversación sin registrar una contratación ni un compromiso de mi parte."}
+      ]
+    },
+    {
+      "id": "martes-01",
+      "weekday": 1,
+      "hour": 10,
+      "title": "Objeción sobre costo total",
+      "performance": "good",
+      "coachingFocus": ["Comparación responsable", "Preguntas abiertas", "Resumen de objeción"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buen día, Cliente Gamma. Soy Lucía Modelo, de KESP Demo. ¿Le parece bien conversar unos minutos sobre las preguntas que tendría al comparar un crédito? La intención es informativa: no hay una oferta aprobada, no iniciaremos una solicitud y no necesito datos de sus cuentas."},
+        {"speaker":"customer","text":"Puedo hablar un momento. Mi principal objeción es el costo. He visto mensajes donde resaltan un pago pequeño, pero después aparecen conceptos que nadie explicó. Me gustaría poder comparar sin sentir que me están escondiendo algo. No estoy buscando que me convenzan de inmediato; quiero entender qué información sería indispensable antes de tomar una decisión."},
+        {"speaker":"agent","text":"Entiendo. Para usted la transparencia pesa más que una frase atractiva sobre el pago. Además del importe periódico, conviene revisar plazo, tasa, comisiones y costo total en documentos de la propuesta concreta. ¿Lo que más le preocupa es que falte información sobre cargos o que le resulte difícil distinguir entre dos opciones con plazos diferentes?"},
+        {"speaker":"customer","text":"Las dos cosas, aunque me cuesta más comparar plazos diferentes. Una opción puede parecer cómoda cada mes y terminar siendo mucho más larga. Si solo me hablan del pago, no puedo valorar el conjunto. Me ayudaría que alguien explicara cómo revisar esas variables sin asegurarme que una alternativa es mejor antes de tener toda la información."},
+        {"speaker":"agent","text":"Podemos empezar por poner las mismas variables lado a lado y separar cualquier dato que todavía no esté confirmado. No sería responsable concluir que una opción es más barata solo por el pago. Si falta una comisión o el costo total, lo correcto es pedir esa aclaración antes de avanzar. Tampoco debemos confundir información publicitaria con condiciones ya autorizadas."},
+        {"speaker":"customer","text":"Eso tiene sentido. Quiero una lista de preguntas, no una recomendación automática. También necesito saber si podría rechazar una propuesta después de recibir la información. Me daría tranquilidad tener espacio para revisarla sin que mi silencio se tome como aceptación. Por ahora no tengo documentos ni cifras para compartir y prefiero mantenerlo así durante esta conversación."},
+        {"speaker":"agent","text":"Perfecto, no hace falta compartirlos. Recibir una explicación no debe presentarse como aceptación de un contrato. Su siguiente paso puede ser revisar la información oficial y decidir si quiere otra consulta. En este ejercicio podemos hablar el viernes a las tres para resolver únicamente dudas sobre la comparación. ¿Le parece que dejemos escrito ese alcance y ese horario?"},
+        {"speaker":"customer","text":"Sí, el viernes a las tres me funciona dentro de la demostración. Entiendo que revisaremos dudas y que no existe una aprobación ni un compromiso de contratar. La explicación del costo total y de los datos faltantes me resulta útil. Voy a preparar mis preguntas y, si todavía no estoy convencido, podré decir que no deseo continuar."}
+      ]
+    },
+    {
+      "id": "martes-02",
+      "weekday": 1,
+      "hour": 15,
+      "title": "Buen tono pero seguimiento ambiguo",
+      "performance": "mixed",
+      "coachingFocus": ["Acordar fecha y hora", "Definir siguiente paso", "No confundir cortesía con consentimiento"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buenas tardes, soy Lucía Modelo de KESP Demo. ¿Hablo con Cliente Delta? Quería conversar sobre información general de crédito, sin solicitar datos personales. Antes de explicar, ¿tiene tiempo para una llamada breve? Si no es buen momento, podemos dejarlo para cuando le resulte más cómodo."},
+        {"speaker":"customer","text":"Tengo unos minutos, aunque estoy por salir. No me molesta escuchar, pero no podría revisar detalles ahora. Estoy organizando unas compras futuras y todavía no sé si necesitaré financiamiento. Me interesa entender qué tendría que comparar, sobre todo para no quedarme solo con la idea de un pago pequeño que luego se extienda demasiado."},
+        {"speaker":"agent","text":"Gracias por avisarme. Lo más útil sería revisar costo total, plazo y condiciones confirmadas, sin dar por hecho que necesita contratar. Un pago bajo por sí solo no demuestra que una alternativa convenga. Podemos hablar con más calma después. ¿Hay alguna preocupación concreta que quisiera dejar identificada para que la próxima conversación se enfoque en eso?"},
+        {"speaker":"customer","text":"Sí, principalmente el plazo y las comisiones. En otra ocasión recibí mucha información junta y no pude distinguir lo importante. Me gustaría una explicación sencilla, pero ahora de verdad tengo que prepararme para salir. Por la mañana suelo tener menos interrupciones. Tampoco quiero que el interés en una explicación quede registrado como una solicitud formal."},
+        {"speaker":"agent","text":"Comprendido, solo estamos hablando de información y no de una solicitud. Puedo retomar el tema cuando tenga más espacio y explicar cada concepto por separado. No le voy a pedir datos financieros hoy. Le agradecería que conserve sus preguntas, porque así podremos aprovechar mejor el siguiente contacto y revisar lo que aún no le haya quedado claro."},
+        {"speaker":"customer","text":"Eso está bien. Pero ¿cuándo sería ese contacto? No tengo la misma disponibilidad todos los días y a veces no puedo contestar números que no reconozco. Si me dice una fecha aproximada, podría organizarme. Me gustaría saber además si la siguiente llamada sería solo para explicar o si van a intentar iniciar algún trámite."},
+        {"speaker":"agent","text":"Sería para seguir conversando, sin compromiso por ahora. Sobre el día, todavía no lo tengo definido; en cuanto encuentre un espacio le vuelvo a llamar. Puede ser pronto o la semana que viene, según la agenda. No se preocupe demasiado por eso. Si no puede responder, después intentamos nuevamente hasta que logremos coincidir en un momento adecuado."},
+        {"speaker":"customer","text":"Bueno, entonces no queda un horario confirmado. Agradezco el tono amable y que no me pidiera información personal, pero preferiría una fecha y un propósito más concretos antes de otro contacto. Recuerde que me interesan únicamente el plazo y las comisiones. No estoy aceptando una propuesta, y si la llamada llega en un momento ocupado quizá no responda."}
+      ]
+    },
+    {
+      "id": "miercoles-01",
+      "weekday": 2,
+      "hour": 10,
+      "title": "Respeto a privacidad y límites",
+      "performance": "good",
+      "coachingFocus": ["No solicitar secretos", "Verificación por canales oficiales", "Escucha empática"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buen día, habla Lucía Modelo de KESP Demo. Cliente Épsilon, quisiera ofrecer una explicación general sobre cómo revisar información de crédito. Antes de continuar, ¿puede hablar unos minutos? No le pediré claves, códigos de verificación, números de tarjeta ni información para acceder a ninguna cuenta."},
+        {"speaker":"customer","text":"Gracias por aclararlo. Soy muy cuidadoso porque he recibido llamadas donde intentan que dicte códigos. No sé cómo comprobar quién está del otro lado y no quiero correr riesgos. Puedo escuchar una explicación general, pero no voy a compartir datos personales, documentos ni información sobre mis ingresos. Tampoco abriré enlaces que me envíen durante una llamada."},
+        {"speaker":"agent","text":"Su precaución es adecuada. No necesita compartir nada de eso para esta conversación. Si alguna vez considera una propuesta, conviene consultar los canales oficiales que usted identifique de forma independiente y revisar allí la información. ¿Le resultaría útil que nos enfoquemos en las preguntas generales que puede hacer, sin hablar de su situación financiera particular?"},
+        {"speaker":"customer","text":"Sí, eso me parece mejor. Me interesa saber cómo distinguir una explicación informativa de una oferta real. A veces una persona dice que todo está autorizado y luego resulta que faltan revisiones. También me preocupa que me presionen para decidir mientras estoy en la llamada. Prefiero leer y comparar por mi cuenta antes de aceptar cualquier cosa."},
+        {"speaker":"agent","text":"Una explicación general describe conceptos; una propuesta concreta debería permitir revisar condiciones verificables, costos y requisitos por el canal correspondiente. Yo no puedo prometer una aprobación durante este ejercicio. Tampoco hay motivo para decidir ahora. Podemos enumerar dudas sobre costo total, plazo y comisiones, y usted después decide si quiere consultar una oferta o no."},
+        {"speaker":"customer","text":"Entiendo. Me gustaría que quedara claro que no estoy autorizando ningún trámite. Solo quiero una lista de preguntas para orientarme. También agradecería que no se programen contactos repetidos sin preguntarme. Si más adelante tengo interés, puedo solicitar otra conversación por mi cuenta. Eso me da más confianza que sentir que alguien va a estar insistiendo."},
+        {"speaker":"agent","text":"De acuerdo. Queda como consulta informativa, sin solicitud ni contratación, y no acordaremos llamadas adicionales. Las preguntas principales son qué costo total tendría, qué plazo aplica, qué cargos existen y dónde verificar las condiciones. No necesitamos registrar datos sensibles para eso. ¿Hay alguna parte de esta explicación que quiera que repita antes de cerrar la conversación?"},
+        {"speaker":"customer","text":"No, quedó claro. Me llevo esas preguntas y la recomendación de verificar por canales oficiales que yo mismo encuentre. No existe una oferta aprobada ni una siguiente llamada programada. Aprecio que respetara mis límites y que no interpretara mi interés en información como consentimiento para un trámite. Con eso podemos terminar por hoy, muchas gracias."}
+      ]
+    },
+    {
+      "id": "miercoles-02",
+      "weekday": 2,
+      "hour": 15,
+      "title": "Explicación extensa sin explorar necesidad",
+      "performance": "poor",
+      "coachingFocus": ["Reducir monólogo", "Explorar antes de presentar", "Comprobar comprensión"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Soy Lucía Modelo de KESP Demo. Cliente Zeta, le explico rápidamente todo lo que debe considerar sobre un crédito: plazo, tasa, costo total, comisiones, periodicidad, requisitos y documentación. Tenemos que hablar de todos esos puntos para que usted tenga una idea completa, así que voy a empezar por describirlos."},
+        {"speaker":"customer","text":"Antes de empezar, yo solo quería entender qué significa costo total. No estoy buscando un crédito en este momento. Tengo pocos minutos y tantos conceptos juntos me confunden. Preferiría una explicación de esa duda concreta y luego decidir si necesito algo más. Tampoco le he dicho para qué me interesaría contratar, porque realmente no lo tengo pensado."},
+        {"speaker":"agent","text":"Sí, pero todos los conceptos están relacionados y conviene verlos completos. El plazo es el tiempo, la periodicidad es la frecuencia y las comisiones son ciertos cargos que pueden existir. Además hay requisitos, revisión y otros pasos que dependen del caso. Si le explico todo desde el principio, seguramente después podrá identificar lo que le resulta más útil."},
+        {"speaker":"customer","text":"Lo que me resulta útil ahora es saber si el pago periódico es lo mismo que el costo total. Esa era mi pregunta. Cuando se agregan requisitos y documentación, pierdo el hilo. ¿Podría responder eso con palabras sencillas? No necesito una lista completa de trámites ni quiero que se asuma que voy a empezar una solicitud."},
+        {"speaker":"agent","text":"El pago y el costo total están relacionados, claro, pero también hay que revisar muchas otras variables. Por eso es importante que escuche primero la explicación general. Hay ofertas con distintos plazos y cada persona puede encontrar una alternativa diferente. Lo habitual es ir revisando cada paso y después aclarar las preguntas cuando ya se tiene una visión más amplia."},
+        {"speaker":"customer","text":"Sigo sin saber si son lo mismo. Me da la impresión de que está siguiendo una explicación preparada y no mi duda. Entiendo que existen muchas variables, pero no tengo tiempo para todas. Una respuesta directa me ayudaría más. Si no podemos centrarnos en eso, prefiero buscar una explicación escrita que pueda revisar despacio por mi cuenta."},
+        {"speaker":"agent","text":"Bueno, puede revisar información escrita y luego volvemos al tema. Solo recuerde que ningún concepto debe verse por separado y que las condiciones pueden variar. Yo quería darle una explicación completa para que no se quedara con dudas. Si en algún momento decide avanzar, tendremos que hablar nuevamente de requisitos y de todo el proceso que le estaba comentando."},
+        {"speaker":"customer","text":"De acuerdo, por ahora terminemos. No he decidido avanzar ni estoy solicitando otra llamada. Mi duda era muy concreta y todavía no recibí una respuesta sencilla. La próxima vez preferiría que primero me preguntaran qué necesito saber y confirmaran que entendí esa parte antes de pasar a otros conceptos. Gracias, voy a consultar la información por mi cuenta."}
+      ]
+    },
+    {
+      "id": "jueves-01",
+      "weekday": 3,
+      "hour": 10,
+      "title": "Recuperación de una objeción con resumen",
+      "performance": "mixed",
+      "coachingFocus": ["No minimizar preocupaciones", "Reformular objeción", "Cierre verificable"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buen día, Cliente Eta. Soy Lucía Modelo de KESP Demo. ¿Tiene unos minutos para conversar sobre información general de crédito? No iniciaremos una solicitud ni revisaremos datos privados. Quisiera saber primero qué le haría sentir cómodo al recibir una explicación y qué tema prefiere que abordemos hoy."},
+        {"speaker":"customer","text":"Tengo tiempo para una explicación breve. Me incomoda que muchas veces intentan restarle importancia a mis preguntas sobre costos. Para mí sí es un asunto importante, aunque todavía no haya tomado una decisión. Me gustaría saber cómo comparar sin depender de que alguien me diga simplemente que todo está bien o que no tengo de qué preocuparme."},
+        {"speaker":"agent","text":"No se preocupe, normalmente esas dudas se resuelven fácil y no debería ser tan complicado. Podemos revisar una alternativa y seguramente encontrará algo que le parezca razonable. Lo importante es no quedarse detenido por demasiadas preguntas. Si avanzamos un poco, después tendrá más claridad y podrá valorar con mayor tranquilidad las condiciones que le presenten."},
+        {"speaker":"customer","text":"Justo eso es lo que me incomoda. Mis preguntas no son un obstáculo que quiera poner; son la forma de entender. No quiero avanzar antes de saber qué estoy comparando. Necesito que se reconozca que el costo y el plazo pueden tener consecuencias para mí, aunque esta llamada sea solo una consulta y no una contratación."},
+        {"speaker":"agent","text":"Tiene razón; mi respuesta minimizó una preocupación válida. Gracias por señalarlo. Reformulo: usted necesita comparar con información completa antes de decidir si continúa. Podemos revisar costo total, plazo y posibles comisiones, y marcar cualquier dato que todavía falte. No puedo asegurar que algo le convenga sin esa información ni pedirle que avance solo para resolver dudas después."},
+        {"speaker":"customer","text":"Ahora sí estamos hablando de lo mismo. Quiero que una explicación me ayude a decidir, no que me empuje a empezar un trámite. Por el momento no tengo una propuesta específica. Me serviría preparar preguntas y luego revisarlas con calma. Si acordamos otra conversación, quisiera que tuviera un objetivo claro y que no se convierta en presión."},
+        {"speaker":"agent","text":"Lo dejamos entonces como preparación de preguntas, sin oferta ni solicitud. El objetivo de una siguiente conversación sería aclarar únicamente conceptos que sigan pendientes. Para este ejercicio propongo el viernes a las diez de la mañana; si prefiere no agendar, también es válido. ¿Le parece ese horario y confirma que solo desea una consulta informativa sobre costos y plazo?"},
+        {"speaker":"customer","text":"Sí, viernes a las diez y solo para esas dudas. Aprecio que haya corregido la primera respuesta y escuchado mi preocupación. Entiendo que no hay aprobación ni condiciones garantizadas. Voy a ordenar mis preguntas y, después de revisarlas, decidiré si necesito más información. Con ese acuerdo concreto me siento más cómodo y podemos terminar la llamada."}
+      ]
+    },
+    {
+      "id": "jueves-02",
+      "weekday": 3,
+      "hour": 15,
+      "title": "Negativa respetada sin insistencia",
+      "performance": "good",
+      "coachingFocus": ["Respeto a negativa", "No asumir consentimiento", "Cierre claro"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buenas tardes, Cliente Theta. Habla Lucía Modelo de KESP Demo. El motivo es ofrecer información general sobre cómo revisar una alternativa de crédito. Antes de seguir, ¿le interesa este tema y dispone de unos minutos? Si no desea conversar, podemos terminar sin iniciar ninguna solicitud ni programar otro contacto."},
+        {"speaker":"customer","text":"Gracias por preguntar. No tengo interés en contratar crédito y prefiero que eso quede claro desde el principio. Puedo dedicar un momento a confirmar que no se registrará nada como aceptación, porque ya me ha pasado que escuchar una explicación se interpreta como querer avanzar. No deseo compartir información financiera ni recibir llamadas insistentes sobre este tema."},
+        {"speaker":"agent","text":"Entendido. Su negativa queda clara y no voy a intentar cambiarla ofreciendo condiciones que no ha solicitado. Esta conversación no es una aceptación de crédito ni una autorización para iniciar un trámite. Tampoco le pediré datos. ¿La única duda que desea aclarar es precisamente que no habrá una solicitud ni un siguiente contacto acordado a partir de esta llamada?"},
+        {"speaker":"customer","text":"Sí, exactamente. No estoy rechazando algo por falta de explicación; simplemente no lo necesito. A veces la persona insiste en descubrir una razón y termina convirtiendo una respuesta sencilla en una discusión. Quiero poder decir que no sin justificar mi situación personal. Si en otro momento busco información, prefiero hacerlo por iniciativa propia en un canal oficial."},
+        {"speaker":"agent","text":"No tiene que justificar su decisión ni hablar de su situación. Es válido no necesitar el producto. Dejaremos el resultado de este ejercicio como no interesado, sin compromiso y sin cita de seguimiento. Si en el futuro busca información, puede acudir por su cuenta a un canal oficial verificado; hoy no hay ningún paso adicional que deba completar."},
+        {"speaker":"customer","text":"Eso me tranquiliza. También quería asegurarme de que no se me enviará una propuesta que parezca ya autorizada. No he dado datos ni consentido un trámite. Me parece correcto cerrar con esa aclaración. Agradezco que no intente prometer ventajas ni decir que debo aprovechar algo urgente para cambiar mi respuesta. Ese tipo de presión suele generar desconfianza."},
+        {"speaker":"agent","text":"Confirmo: no hay solicitud, oferta aprobada ni seguimiento acordado, y no voy a presentar su negativa como interés. Gracias por tomarse este momento para aclararlo. No necesito preguntarle nada más. Antes de despedirme, ¿quedó resuelta la duda sobre el alcance de esta conversación, o hay alguna frase que deba explicar de otra manera para evitar una confusión?"},
+        {"speaker":"customer","text":"Quedó resuelta. Entiendo que la conversación termina aquí, sin contratación ni llamada de seguimiento. No tengo más preguntas y no necesito información adicional. Gracias por escuchar la respuesta desde el principio y por repetir el alcance sin presionarme. Así se puede cerrar de manera respetuosa aunque no exista una oportunidad de venta. Que tenga buena tarde."}
+      ]
+    },
+    {
+      "id": "viernes-01",
+      "weekday": 4,
+      "hour": 10,
+      "title": "Seguimiento informativo bien estructurado",
+      "performance": "good",
+      "coachingFocus": ["Agenda compartida", "Explicación clara", "Verificación de entendimiento"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buen día, Cliente Iota. Soy Lucía Modelo de KESP Demo. En este ejercicio teníamos pendiente una consulta informativa sobre plazo y costo total. ¿Sigue siendo buen momento? Propongo revisar primero su duda principal, confirmar que quede clara y después decidir si necesita algo más, sin iniciar una solicitud."},
+        {"speaker":"customer","text":"Sí, puedo hablar. Me parece bien esa agenda. Mi duda principal es por qué dos opciones con pagos parecidos pueden tener costos totales diferentes. No tengo una propuesta concreta, así que quisiera una explicación general, sin cifras inventadas ni promesas. También me interesa saber qué información faltaría para comparar de verdad y no quedarme solo con una impresión."},
+        {"speaker":"agent","text":"El pago periódico es solo una parte. Si cambia el número de pagos, el plazo o algún cargo, el total puede ser distinto aunque cada pago parezca similar. Para comparar una propuesta real necesitaría condiciones completas y verificables. Si faltan comisiones o duración, habría que aclararlas antes. ¿Esa diferencia entre un pago y el conjunto de pagos responde a su primera duda?"},
+        {"speaker":"customer","text":"Sí, ahora lo entiendo mejor. No basta con mirar lo que se paga cada vez; también debo considerar durante cuánto tiempo y qué otros conceptos existen. Me ayuda que lo explique sin decir que una opción es automáticamente buena. La siguiente duda es cómo reconocer cuando todavía falta información y no debería sacar una conclusión apresurada."},
+        {"speaker":"agent","text":"Puede revisar si conoce el plazo completo, la periodicidad, las comisiones aplicables y el costo total informado por el canal oficial. Si algo no está claro, conviene anotarlo como pendiente en lugar de adivinar. Esta lista orienta la revisión, pero no sustituye los documentos de una propuesta ni demuestra una aprobación. Su decisión puede esperar hasta entender las condiciones."},
+        {"speaker":"customer","text":"Perfecto. Entonces, si una explicación omite algún cargo o no establece bien el plazo, no debería asumir que ya conozco el total. Puedo pedir la aclaración sin aceptar un trámite. Eso era lo que necesitaba. Por ahora no deseo recibir una oferta, pero sí quería resolver estas dudas para estar preparado cuando revise información más adelante."},
+        {"speaker":"agent","text":"Exactamente, y gracias por resumirlo con sus propias palabras. Hoy resolvimos la diferencia entre pago y costo total, y las preguntas que conviene dejar claras. No estamos generando una oferta ni una solicitud. Como no desea avanzar ahora, cerraremos sin agendar otro contacto. ¿Hay alguna duda puntual pendiente antes de dar por terminada esta consulta informativa?"},
+        {"speaker":"customer","text":"No, con eso es suficiente. Me llevo una explicación concreta y una forma de identificar información faltante. Entiendo que no hay contratación, aprobación ni nueva llamada programada. Cuando decida buscar una propuesta, revisaré sus condiciones por el canal correspondiente. Gracias por seguir la agenda y comprobar lo que entendí antes de pasar al siguiente tema."}
+      ]
+    },
+    {
+      "id": "viernes-02",
+      "weekday": 4,
+      "hour": 15,
+      "title": "Resumen correcto con oportunidad de profundizar",
+      "performance": "mixed",
+      "coachingFocus": ["Explorar objetivo del cliente", "Evitar cierre prematuro", "Priorizar preguntas"],
+      "turns": [
+        {"speaker":"agent","text":"Esta es una conversación ficticia de demostración, con voces generadas. Buenas tardes, soy Lucía Modelo de KESP Demo. Cliente Kappa, ¿dispone de unos minutos para una consulta informativa? No le pediré datos privados ni iniciaremos un trámite. Quisiera conocer qué le gustaría entender sobre un crédito y ayudarle a ordenar sus preguntas antes de revisar cualquier propuesta concreta."},
+        {"speaker":"customer","text":"Sí, tengo unos minutos. Estoy comparando posibilidades para un proyecto futuro, pero todavía no sé si necesito crédito. Mi duda no es solamente cuánto pagaría; también quiero pensar si tiene sentido asumir ese compromiso. Me gustaría que la conversación me ayudara a ordenar esas prioridades, en vez de ir directamente a una lista de requisitos o a una propuesta."},
+        {"speaker":"agent","text":"Claro. Lo principal es revisar plazo, costo total, tasa y comisiones en información oficial. No hay que tomar una decisión solo por un pago que parezca bajo. Tampoco puedo garantizar una aprobación ni condiciones durante esta llamada. Si tiene presentes esos conceptos, ya cuenta con una base para comparar y puede decidir más adelante si desea continuar con alguna consulta."},
+        {"speaker":"customer","text":"Esa lista es útil, pero me falta conectar la información con lo que estoy tratando de decidir. Todavía no he definido el objetivo ni el momento de mi proyecto. No busco que me diga qué hacer, solo que me pregunte un poco para distinguir si mi prioridad es esperar, comparar o solicitar más información. Todo eso puede hacerse sin compartir datos sensibles."},
+        {"speaker":"agent","text":"Entiendo. ¿Su prioridad inmediata sería aprender los conceptos para decidir después, o ya quiere revisar una propuesta? Podemos mantenernos en información general si todavía está organizando su objetivo. No hace falta hablar de ingresos ni documentos. También es válido concluir que por ahora no necesita ninguna alternativa y dejar la conversación ahí hasta que tenga más claridad."},
+        {"speaker":"customer","text":"Por ahora quiero aprender y ordenar mis ideas, no revisar una propuesta. Me ayuda que reconozca la opción de esperar. Aun así, me gustaría haber dedicado más tiempo a esa parte desde el principio. Puedo preparar preguntas por mi cuenta y volver a consultar cuando defina mejor el proyecto. No necesito que me contacten de nuevo esta semana."},
+        {"speaker":"agent","text":"De acuerdo. Resumo: está en una etapa informativa, todavía no define su proyecto y no quiere una oferta ni un contacto de seguimiento esta semana. No registraremos una solicitud ni una aceptación. Puede revisar los conceptos y consultar después por iniciativa propia. Gracias por explicar su objetivo; me sirve para no asumir que toda consulta tiene que terminar en un trámite."},
+        {"speaker":"customer","text":"Sí, ese resumen refleja lo que quería decir. Agradezco que finalmente lo diferenciáramos. Me quedo con la tarea de ordenar mis preguntas, sin compromiso de contratar ni cita programada. Para futuras conversaciones sería útil explorar primero la intención de la persona y después elegir qué conceptos explicar. Así la información se siente más relevante y no como una lista igual para todos."}
+      ]
+    }
+  ]
+}

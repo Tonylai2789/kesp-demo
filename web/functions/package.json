@@ -1,0 +1,66 @@
+{
+  "name": "kesp-demo-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for AI Banking Agent",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "node ../../scripts/require-private-assets.mjs && node -e \"require('fs').rmSync('lib',{recursive:true,force:true})\" && tsc && copyfiles -f \"../../subagent_2.0/*/promptsubagent2.0-subagent-*.md\" lib/prompts/",
+    "lint": "eslint src --ext .ts",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
+    "firebase-admin": "^13.10.0",
+    "firebase-functions": "^7.2.2",
+    "google-auth-library": "10.5.0",
+    "openai": "^6.16.0",
+    "pdfkit": "^0.19.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "@types/pdfkit": "^0.17.6",
+    "copyfiles": "^2.4.1",
+    "eslint": "^9.39.2",
+    "globals": "^17.0.0",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.53.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "maxWorkers": 1,
+    "roots": [
+      "<rootDir>/src"
+    ]
+  },
+  "private": true,
+  "overrides": {
+    "firebase-admin": {
+      "@fastify/busboy": "3.2.2"
+    },
+    "@google-cloud/storage@7": {
+      "uuid": "11.1.1"
+    },
+    "google-gax@4": {
+      "uuid": "11.1.1"
+    },
+    "gaxios@6": {
+      "uuid": "11.1.1"
+    },
+    "teeny-request@9": {
+      "uuid": "11.1.1"
+    },
+    "minimatch@3": {
+      "brace-expansion": "1.1.21"
+    }
+  }
+}

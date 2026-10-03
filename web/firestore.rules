@@ -1,0 +1,480 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isDemoIdentity() {
+      return (request.auth.uid == 'kesp-demo-supervisor'
+          && request.auth.token.email == 'demo-supervisor@kesp-demo.invalid'
+          && request.auth.token.firebase.sign_in_provider == 'password')
+        || (request.auth.uid != 'kesp-demo-supervisor'
+          && request.auth.token.email_verified == true
+          && request.auth.token.firebase.sign_in_provider == 'google.com'
+          && request.auth.token.email in ['tonylai2789@gmail.com', 'logitech2789@gmail.com']);
+    }
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null
+        && isDemoIdentity()
+        && request.auth.token.email in get(/databases/$(database)/documents/config/allowedEmails).data.emails
+        && get(/databases/$(database)/documents/organizations/consubanco/members/$(request.auth.uid)).data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/organizations/consubanco/members/$(request.auth.uid)).data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/organizations/consubanco/members/$(request.auth.uid)).data.organizationId == 'consubanco'
+        && get(/databases/$(database)/documents/organizations/consubanco/members/$(request.auth.uid)).data.get('accessEnabled', true) == true
+        && get(/databases/$(database)/documents/organizations/consubanco/members/$(request.auth.uid)).data.role in ['supervisor', 'admin']
+        // The reserved password identity must never inherit an elevated or agent role.
+        && (request.auth.uid != 'kesp-demo-supervisor' || (
+          get(/databases/$(database)/documents/organizations/consubanco/members/$(request.auth.uid)).data.role == 'supervisor'
+          && get(/databases/$(database)/documents/organizations/consubanco/members/$(request.auth.uid)).data.accessEnabled == true));
+    }
+
+    // Helper: check if the authenticated user belongs to an organization
+    function isOrganizationMember(organizationId) {
+      return organizationId == 'consubanco' && isAuthenticated() &&
+        exists(/databases/$(database)/documents/organizations/$(organizationId)/members/$(request.auth.uid));
+    }
+
+    // Helper: check if the authenticated user is an organization admin
+    function isOrganizationAdmin(organizationId) {
+      return isOrganizationMember(organizationId) &&
+        get(/databases/$(database)/documents/organizations/$(organizationId)/members/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper: check if the authenticated user is an organization supervisor or admin
+    function isOrganizationSupervisorOrAdmin(organizationId) {
+      return isOrganizationMember(organizationId) &&
+        get(/databases/$(database)/documents/organizations/$(organizationId)/members/$(request.auth.uid)).data.role in ['supervisor', 'admin'];
+    }
+
+    // Helper: read the mapped CCC sales agent id for the authenticated user
+    function memberSalesAgentId(organizationId) {
+      return get(/databases/$(database)/documents/organizations/$(organizationId)/members/$(request.auth.uid)).data.salesAgentId;
+    }
+
+    // Helper: check whether the authenticated user is the mapped agent for one salesAgentId
+    function isMappedOrganizationAgent(organizationId, salesAgentId) {
+      return isOrganizationMember(organizationId) &&
+        get(/databases/$(database)/documents/organizations/$(organizationId)/members/$(request.auth.uid)).data.role == 'agent' &&
+        salesAgentId is string &&
+        memberSalesAgentId(organizationId) == salesAgentId;
+    }
+
+    // Helper: check if the authenticated user can read organization-visible automatic calls
+    function isOrganizationVisibleAutomaticCall(call) {
+      return call.organizationId is string &&
+        call.visibilityScope == 'organization' &&
+        (
+          isOrganizationSupervisorOrAdmin(call.organizationId) ||
+          isMappedOrganizationAgent(call.organizationId, call.salesAgentId) ||
+          isMappedOrganizationAgent(call.organizationId, call.matchedAgentAnalysisId)
+        );
+    }
+
+    // Helper: check if the authenticated user can read organization-visible CCC profiles
+    function isOrganizationVisibleCccAgentProfile(profile) {
+      return profile.organizationId is string &&
+        profile.visibilityScope == 'organization' &&
+        (
+          isOrganizationSupervisorOrAdmin(profile.organizationId) ||
+          isMappedOrganizationAgent(profile.organizationId, profile.salesAgentId)
+        );
+    }
+
+    // Helper: check if the authenticated user can read organization-visible CCC activity
+    function isOrganizationVisibleCccAgentActivity(activity) {
+      return activity.organizationId is string &&
+        activity.visibilityScope == 'organization' &&
+        (
+          isOrganizationSupervisorOrAdmin(activity.organizationId) ||
+          isMappedOrganizationAgent(activity.organizationId, activity.salesAgentId)
+        );
+    }
+
+    // Helper: check if the authenticated user can read the call
+    function isCallReader(callId) {
+      let call = get(/databases/$(database)/documents/calls/$(callId)).data;
+      return isAuthenticated() && (
+        (isOrganizationSupervisorOrAdmin('consubanco') && (call.uploadedBy == request.auth.uid ||
+        (call.reviewerUserIds is list && request.auth.uid in call.reviewerUserIds))) ||
+        isOrganizationVisibleAutomaticCall(call)
+      );
+    }
+
+    // Helper: check if the authenticated user owns the call
+    function isCallOwner(callId) {
+      return isOrganizationSupervisorOrAdmin('consubanco') &&
+        get(/databases/$(database)/documents/calls/$(callId)).data.uploadedBy == request.auth.uid;
+    }
+
+    // Helper: check if the authenticated user owns the agent analysis
+    function isAgentAnalysisOwner(agentAnalysisId) {
+      return isOrganizationSupervisorOrAdmin('consubanco') &&
+        get(/databases/$(database)/documents/agent_analyses/$(agentAnalysisId)).data.uploadedBy == request.auth.uid;
+    }
+
+    // Helper: check if the authenticated user can read the agent analysis
+    function isAgentAnalysisReader(agentAnalysisId) {
+      let analysis = get(/databases/$(database)/documents/agent_analyses/$(agentAnalysisId)).data;
+      return isAuthenticated() && (
+        (isOrganizationSupervisorOrAdmin('consubanco') && analysis.uploadedBy == request.auth.uid) ||
+        isOrganizationVisibleCccAgentProfile(analysis)
+      );
+    }
+
+    // Helper: check if the authenticated user owns the agent activity tree
+    function isAgentActivityOwner(agentKey) {
+      return isOrganizationSupervisorOrAdmin('consubanco') &&
+        get(/databases/$(database)/documents/agent_activity/$(agentKey)).data.uploadedBy == request.auth.uid;
+    }
+
+    // Helper: check if the authenticated user can read the agent activity tree
+    function isAgentActivityReader(agentKey) {
+      let activity = get(/databases/$(database)/documents/agent_activity/$(agentKey)).data;
+      return isAuthenticated() && (
+        (isOrganizationSupervisorOrAdmin('consubanco') && activity.uploadedBy == request.auth.uid) ||
+        isOrganizationVisibleCccAgentActivity(activity)
+      );
+    }
+
+    // Upload authorizations and provider snapshots are created/consumed only by backend functions.
+    match /manual_upload_requests/{callId} {
+      allow get: if isOrganizationSupervisorOrAdmin('consubanco') && resource.data.ownerUid == request.auth.uid;
+      allow list, write: if false;
+    }
+
+    // Calls collection - require authentication + ownership
+    match /calls/{callId} {
+      allow read: if isAuthenticated() && (
+        (isOrganizationSupervisorOrAdmin('consubanco') && (resource.data.uploadedBy == request.auth.uid ||
+        (resource.data.reviewerUserIds is list && request.auth.uid in resource.data.reviewerUserIds))) ||
+        isOrganizationVisibleAutomaticCall(resource.data)
+      );
+      allow create: if false;
+      allow update: if isOrganizationSupervisorOrAdmin('consubanco')
+        && resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.uploadedBy == resource.data.uploadedBy
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'displayName', 'displayNameBase', 'displayNameSuffix', 'updatedAt']);
+      allow delete: if false;
+
+      // Transcript subcollection
+      match /transcript/{doc} {
+        allow read: if isCallReader(callId);
+        // Only Cloud Functions can write
+        allow write: if false;
+      }
+
+      // Feedback subcollection
+      match /feedback/{doc} {
+        allow read: if isCallReader(callId);
+        // Only Cloud Functions can write
+        allow write: if false;
+      }
+
+      // Manual short-call review result subcollection
+      match /short_call_review/{doc} {
+        allow read: if isCallReader(callId);
+        allow write: if false;
+      }
+
+      // Manual short-call review runs and task docs
+      match /short_call_review_runs/{runId} {
+        allow read: if isCallReader(callId);
+        allow write: if false;
+
+        match /tasks/{taskId} {
+          allow read: if isCallReader(callId);
+          allow write: if false;
+        }
+      }
+
+      // Chunks subcollection (distributed transcription)
+      match /chunks/{chunkIndex} {
+        allow read: if isCallReader(callId);
+        // Only Cloud Functions can write
+        allow write: if false;
+      }
+
+      // Analysis runs subcollection (parallel subagent analysis)
+      match /analysis_runs/{runId} {
+        allow read: if isCallReader(callId);
+        // Only Cloud Functions can write
+        allow write: if false;
+
+        // Subagent task docs within a run
+        match /tasks/{taskId} {
+          allow read: if isCallReader(callId);
+          // Only Cloud Functions can write
+          allow write: if false;
+        }
+      }
+    }
+
+    // Conversation metrics are served only by the supervisor/admin callable.
+    match /conversation_metrics/{callId} {
+      allow read, write: if false;
+    }
+
+    // Canonical provider-output pointers are backend-owned and never client mutable.
+    match /transcription_cache/{cacheKey} {
+      allow read, write: if false;
+    }
+
+    // Gemini audio reviews are served only by supervisor/admin callables.
+    match /gemini_audio_reviews/{callId} {
+      allow read, write: if false;
+    }
+
+    // Temporary audio authorization is managed only by trusted backend workers.
+    match /gemini_audio_access_grants/{grantId} {
+      allow read, write: if false;
+    }
+
+    // Gemini audio review gate is backend-owned and never client mutable.
+    match /system_config/gemini_audio_review {
+      allow read, write: if false;
+    }
+
+    // Agent analyses collection - require authentication + ownership
+    match /agent_analyses/{agentAnalysisId} {
+      allow read: if isAuthenticated() && (
+        (isOrganizationSupervisorOrAdmin('consubanco') && resource.data.uploadedBy == request.auth.uid) ||
+        isOrganizationVisibleCccAgentProfile(resource.data)
+      );
+      allow create: if isOrganizationSupervisorOrAdmin('consubanco')
+        && request.resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uploadedBy', 'salesAgentId', 'salesAgentName', 'organizationId', 'visibilityScope', 'status', 'error', 'createdAt', 'updatedAt'])
+        && request.resource.data.organizationId == 'consubanco'
+        && request.resource.data.visibilityScope == 'organization'
+        && request.resource.data.salesAgentId == 'agent_' + agentAnalysisId
+        && request.resource.data.salesAgentName is string
+        && request.resource.data.salesAgentName.size() > 0
+        && request.resource.data.salesAgentName.size() <= 200
+        && request.resource.data.status == 'ready'
+        && request.resource.data.error == null
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+      allow update: if isOrganizationSupervisorOrAdmin('consubanco')
+        && resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['salesAgentName', 'callProcessingConfig', 'reportProcessingConfig', 'updatedAt'])
+        && request.resource.data.salesAgentName is string
+        && request.resource.data.salesAgentName.size() > 0
+        && request.resource.data.salesAgentName.size() <= 200
+        && (!('callProcessingConfig' in request.resource.data) || validProcessingConfig(request.resource.data.callProcessingConfig))
+        && (!('reportProcessingConfig' in request.resource.data) || validProcessingConfig(request.resource.data.reportProcessingConfig));
+      allow delete: if false;
+
+      match /analysis_runs/{runId} {
+        allow read: if isAgentAnalysisReader(agentAnalysisId);
+        allow write: if false;
+
+        match /tasks/{taskId} {
+          allow read: if isAgentAnalysisReader(agentAnalysisId);
+          allow write: if false;
+        }
+      }
+
+      match /reports/{reportId} {
+        allow read: if isAgentAnalysisReader(agentAnalysisId);
+        allow write: if false;
+      }
+    }
+
+    // Agent activity collection - derived per-agent reminders and progress rollups
+    match /agent_activity/{agentKey} {
+      allow read: if isAuthenticated() && (
+        (isOrganizationSupervisorOrAdmin('consubanco') && resource.data.uploadedBy == request.auth.uid) ||
+        isOrganizationVisibleCccAgentActivity(resource.data)
+      );
+      allow write: if false;
+
+      match /call_snapshots/{callId} {
+        allow read: if isAgentActivityReader(agentKey);
+        allow write: if false;
+      }
+
+      match /sales_rollups/{rollupId} {
+        allow read: if isAgentActivityReader(agentKey);
+        allow write: if false;
+      }
+
+      match /progress_rollups/{rollupId} {
+        allow read: if isAgentActivityReader(agentKey);
+        allow write: if false;
+      }
+
+      match /loan_cases/{caseId} {
+        allow read: if isAgentActivityReader(agentKey);
+        allow write: if false;
+
+        match /events/{eventId} {
+          allow read: if isAgentActivityReader(agentKey);
+          allow write: if false;
+        }
+      }
+
+      match /reminders/{reminderId} {
+        allow read: if isAgentActivityReader(agentKey);
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // Organizations are backend/script managed; members may read their membership and organization label.
+    match /organizations/{organizationId} {
+      allow read: if isOrganizationMember(organizationId);
+      allow write: if false;
+
+      match /members/{userId} {
+        allow read: if isAuthenticated() && userId == request.auth.uid;
+        allow write: if false;
+      }
+
+      match /access_audit/{eventId} {
+        allow read, write: if false;
+      }
+
+      match /agent_email_recipients/{salesAgentId} {
+        allow read: if isOrganizationSupervisorOrAdmin(organizationId);
+        allow write: if false;
+      }
+
+      match /agent_email_report_deliveries/{deliveryId} {
+        allow read: if isOrganizationSupervisorOrAdmin(organizationId);
+        allow write: if false;
+      }
+
+      match /agent_check_ins/{checkInId} {
+        allow read: if isOrganizationSupervisorOrAdmin(organizationId);
+        allow write: if false;
+      }
+
+      match /supervisor_notification_recipients/{recipientId} {
+        allow read: if isOrganizationSupervisorOrAdmin(organizationId);
+        allow write: if false;
+      }
+    }
+
+    // CCC call identity index is backend/script managed.
+    match /ccc_call_index/{canonicalCallId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // Display-name counters are backend/script managed.
+    match /call_display_name_counters/{counterId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // CCC agent mappings are backend/script managed; owners may read mappings for validation.
+    match /ccc_agent_mappings/{mappingId} {
+      allow read: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
+      allow write: if false;
+    }
+
+    // CCC automatic workflow operational records are admin-monitor read-only.
+    match /ccc_prod_copy_events/{eventId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /ccc_short_call_review/{reviewId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /ccc_missing_mapping_events/{mappingId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /ccc_ingest_events/{eventId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // Stats collection - read only for authenticated users
+    match /stats/{doc} {
+      allow read: if isOrganizationSupervisorOrAdmin('consubanco');
+      allow write: if false;
+    }
+
+    // Config collection - writable only via Firebase Console
+    match /config/{doc} {
+      // allowedEmails must be readable before sign-in (used by AuthContext on mount)
+      allow read: if doc == 'allowedEmails';
+      allow write: if false;
+    }
+
+    // Guided iteration requests are returned only through role-filtered Cloud Functions.
+    match /iteration_requests/{requestId} {
+      allow read, write: if false;
+
+      match /messages/{messageId} {
+        allow read, write: if false;
+      }
+
+      match /versions/{versionId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Private recommendations, review decisions, and future Codex packets are backend-only.
+    match /iteration_request_internal/{requestId} {
+      allow read, write: if false;
+    }
+
+    // Exact attachment reservations are backend-created and never directly client-readable.
+    match /iteration_request_uploads/{attachmentId} {
+      allow read, write: if false;
+    }
+
+    // Manual short-call pattern snapshots are user-owned and backend managed.
+    match /manual_short_call_patterns/{userId} {
+      allow read: if isAuthenticated() && userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // KESP inbox - user-scoped notifications (written by Cloud Functions)
+    match /kesp_inbox/{userId} {
+      allow read: if isAuthenticated() && userId == request.auth.uid;
+      allow write: if false;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && userId == request.auth.uid;
+        allow create: if false;
+        allow delete: if false;
+        allow update: if isAuthenticated()
+          && userId == request.auth.uid
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt', 'dismissedAt', 'updatedAt'])
+          && (request.resource.data.readAt == null || request.resource.data.readAt is timestamp)
+          && (request.resource.data.dismissedAt == null || request.resource.data.dismissedAt is timestamp)
+          && (request.resource.data.updatedAt == null || request.resource.data.updatedAt is timestamp);
+      }
+    }
+
+    // Agent profile assistant chat state must be callable-only (Admin SDK), never client-readable.
+    match /agent_profile_assistant_chats/{chatId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // Role assignments, seed provenance and paid budget records are never client writable.
+    match /user_access_pending/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Only server transactions can inspect or consume request-limit counters.
+    match /_demo_api_limits/{document=**} {
+      allow read, write: if false;
+    }
+
+    function validProcessingConfig(config) {
+      return config is map && config.keys().hasOnly(['analyzerModel', 'promptVersions'])
+        && (!('analyzerModel' in config) || config.analyzerModel is string)
+        && (!('promptVersions' in config) || config.promptVersions is map);
+    }
+  }
+}
