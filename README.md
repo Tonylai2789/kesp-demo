@@ -6,6 +6,14 @@ sanitized reconstructions with replacement voices, not original customer audio.
 
 **[Open the demo](https://kesp-demo-tonylai2789.web.app/login)**
 
+## Privacy Note
+
+Some bank-specific prompts, scoring policies, and operational details have been
+removed or replaced with **Info redacted** placeholders to protect privacy and
+confidential information. Original customer recordings and records are not
+included. The demo uses fictional identities and sanitized replacement audio;
+the public source shows the engineering without exposing private evaluation rules.
+
 ## Try It
 
 Choose username/password sign-in with **`demo-supervisor`** and the reviewer
