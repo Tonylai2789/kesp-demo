@@ -109,6 +109,29 @@ Everyone using the reviewer login shares its limits. These controls are not a
 DDoS shield or a hard cap on all Firebase infrastructure charges. Keep the
 reviewer password restricted and revoke access when review ends.
 
+### OpenAI Request Limits
+
+These are limits enforced by this demo, not OpenAI's maximum model capabilities
+or the provider account's tokens-per-minute quota:
+
+| Control | Demo limit |
+| --- | --- |
+| Standard text-generation request (including individual-call subagents) | At most 8,192 output tokens per request |
+| Pattern-report detector or consolidator request | At most 16,384 output tokens per request |
+| Serialized text-generation request body | 256,000 UTF-8 bytes; this is a byte limit, not a token count |
+| Shared provider-processing allowance | USD30 total across the demo, not per user or per request |
+
+Output limits use OpenAI's [`max_completion_tokens`](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create),
+which includes visible output and any reasoning tokens. A task may request less;
+one call or report can require multiple separately capped requests. Input tokens
+are billed separately, and the backend reserves a conservative input-plus-output
+cost before each paid request, then reconciles reported usage. The larger report
+limit is backend-controlled; ordinary requests cannot opt into it. Truncated
+pattern-report output is rejected rather than saved as a successful report.
+
+See `web/functions/src/demoPaidProviders.ts` for enforcement. These token and
+budget limits are separate from the callable request-rate limits above.
+
 ## Checks and Limitations
 
 Use Node.js 22 and npm; authorization emulators also require Java 21 and Firebase
