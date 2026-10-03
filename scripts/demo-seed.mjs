@@ -344,7 +344,7 @@ export async function main(args) {
   const source = JSON.parse(await readFile(join(ROOT, 'synthetic/spanish-calls.v1.json'), 'utf8'));
   const plan = buildPlan(source, options.asOf);
   process.stdout.write(JSON.stringify({ mode: options.execute ? 'execute' : 'dry-run', ...plan,
-    note: 'Speech estimate only; transcription and analysis draw from the same USD25 budget.' }, null, 2) + '\n');
+    note: 'Speech estimate only; transcription and analysis draw from the same shared processing budget.' }, null, 2) + '\n');
   if (options.execute) await execute(source, plan, options);
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

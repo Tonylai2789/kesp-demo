@@ -94,7 +94,7 @@ Start with `web/functions/src/triggers.ts`, `processingTaskWorkers.ts`, and
 - Only the Call analyzer workspace is exposed; Panel and automation are absent.
 - Authenticated audio playback; legacy bearer download tokens were revoked.
 - Upload limit: five minutes and 25 MiB; at most two active calls.
-- Shared USD25 provider allowance with transactional reservations. No browser
+- Shared USD30 provider allowance with transactional reservations. No browser
   control can increase or reset it; unknown charges remain reserved for review.
 
 Authenticated callable APIs also enforce shared and per-account limits:

@@ -3,6 +3,12 @@
 Security update: October 3, 2026. This document distinguishes the hosted private
 runtime from this intentionally redacted public source snapshot.
 
+Subsequent configuration update: the operator authorized re-enabling paid
+processing and raising the total allowance to USD30 without resetting spending
+or reservations. The paused-budget figures below are the earlier verification
+snapshot; the app displays current availability and remaining allowance. This
+configuration change alone does not generate a new report or paid call.
+
 ## Hosted Runtime
 
 - Existing-data backend readiness checks: **93/93 passed**.

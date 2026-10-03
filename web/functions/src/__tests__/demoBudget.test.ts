@@ -79,8 +79,17 @@ describe('deployment and audio guards', () => {
   });
 });
 
-describe('global USD25 paid ledger', () => {
+describe('bounded paid ledger', () => {
   const spend = { provider: 'openai' as const, model: 'gpt-5.4', purpose: 'analysis', upperBoundMicros: 100_000 };
+  test('accepts the authorized USD30 ceiling without resetting existing accounting', () => {
+    const existing = { enabled: true, limitMicros: 30_000_000, spentMicros: 14_966_271, reservedMicros: 100_000 };
+    expect(readDemoBudget(existing)).toEqual(existing);
+    expect(admitDemoReservation(existing, 14_933_729)).toBe(15_033_729);
+    expect(() => admitDemoReservation(existing, 14_933_730)).toThrow();
+    expect(existing.spentMicros).toBe(14_966_271);
+    expect(existing.reservedMicros).toBe(100_000);
+    expect(() => readDemoBudget({ ...existing, limitMicros: 30_000_001 })).toThrow();
+  });
   test('missing, corrupt and over-budget ledgers fail closed', () => {
     expect(() => readDemoBudget(undefined)).toThrow();
     expect(() => readDemoBudget({ limitMicros: 26_000_000, spentMicros: 0, reservedMicros: 0 })).toThrow();

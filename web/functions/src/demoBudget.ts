@@ -6,7 +6,7 @@ import { DEMO_PROJECT_ID, DEMO_BUCKET, assertDemoRuntime as assertDemoConfigRunt
 
 export { DEMO_PROJECT_ID } from './demoConfig';
 export const DEMO_STORAGE_BUCKET = DEMO_BUCKET;
-export const DEMO_BUDGET_MICROS = 25_000_000;
+export const DEMO_BUDGET_MICROS = 30_000_000;
 export const DEMO_MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 export const DEMO_MAX_AUDIO_SECONDS = 300;
 export const DEMO_BUDGET_PATH = 'demo_usage/budget';
