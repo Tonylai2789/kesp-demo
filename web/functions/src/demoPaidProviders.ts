@@ -5,6 +5,8 @@ import {
 } from './demoBudget';
 
 export const DEMO_MAX_COMPLETION_TOKENS = 8192;
+// Aggregate reports contain several calls' evidence and coaching, not one call.
+export const DEMO_PATTERN_COMPLETION_TOKENS = 16384;
 // Scribe word timings accompany the transcript. Keep a bounded request below
 // GPT-5.4's long-context pricing threshold even with byte-level token estimates.
 export const DEMO_MAX_INPUT_BYTES = 256_000;
@@ -38,7 +40,7 @@ function asRecord(value: unknown): JsonRecord {
   return value as JsonRecord;
 }
 
-export function boundedDemoCompletion(input: unknown): { body: JsonRecord; model: string; upperBoundMicros: number } {
+export function boundedDemoCompletion(input: unknown, purpose?: string): { body: JsonRecord; model: string; upperBoundMicros: number } {
   const body = { ...asRecord(input) };
   const model = String(body.model);
   const rates = Object.hasOwn(DEMO_MODEL_RATES, model) ? DEMO_MODEL_RATES[model] : undefined;
@@ -66,7 +68,8 @@ export function boundedDemoCompletion(input: unknown): { body: JsonRecord; model
     throw demoGuardError('demo_provider_request', 'Invalid completion token bound');
   }
   delete body.max_tokens;
-  body.max_completion_tokens = Math.min(Number(requested), DEMO_MAX_COMPLETION_TOKENS);
+  const ceiling = purpose === 'agent_analysis' ? DEMO_PATTERN_COMPLETION_TOKENS : DEMO_MAX_COMPLETION_TOKENS;
+  body.max_completion_tokens = Math.min(Number(requested), ceiling);
   body.service_tier = 'default';
   body.store = false;
   const bytes = Buffer.byteLength(JSON.stringify(body));
@@ -124,7 +127,7 @@ export function createDemoOpenAIFetch(context: DemoProviderContext, transport: t
     headers.delete('OpenAI-Organization');
     let cost: (response: Response) => Promise<number | null>;
     if (url.pathname === '/v1/chat/completions') {
-      const prepared = boundedDemoCompletion(await request.json());
+      const prepared = boundedDemoCompletion(await request.json(), context.purpose);
       ({ model, upperBoundMicros } = prepared);
       body = JSON.stringify(prepared.body);
       cost = async (response) => {

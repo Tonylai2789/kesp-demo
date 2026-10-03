@@ -1,4 +1,5 @@
-import { createDemoOpenAI } from './demoPaidProviders';
+import { createDemoOpenAI, DEMO_PATTERN_COMPLETION_TOKENS } from './demoPaidProviders';
+import { parsePatternCompletion, patternCompletionMetadata } from './patternCompletion';
 import { isDemoReportCall } from './demoConfig';
 import * as fs from "fs";
 import * as path from "path";
@@ -1754,16 +1755,14 @@ export async function runAgentAnalysisTask(
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
+        max_completion_tokens: DEMO_PATTERN_COMPLETION_TOKENS,
         ...analyzerRequestOptions(analyzerModel),
       });
 
-      const responseText = response.choices[0]?.message?.content;
-      if (!responseText) {
-        throw new Error("No response from OpenAI");
-      }
+      await taskRef.update({ completion: patternCompletionMetadata(response) });
 
       const output = normalizePatternDetectorOutput(
-        JSON.parse(responseText),
+        parsePatternCompletion(response, 'candidatePatterns'),
         totalCallCount
       );
       const sanitizedOutput = sanitizeSubagentOutputForFirestore(output);
@@ -1787,6 +1786,7 @@ export async function runAgentAnalysisTask(
       await taskRef.update({
         status: "error",
         error: error.message || "Behavior pattern detector failed",
+        errorCode: typeof error.code === "string" ? error.code : "pattern_task_failed",
         model: analyzerModel,
         promptPath,
         completedAt: FieldValue.serverTimestamp(),
@@ -1887,16 +1887,14 @@ export async function runAgentAnalysisTask(
         { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },
+      max_completion_tokens: DEMO_PATTERN_COMPLETION_TOKENS,
       ...analyzerRequestOptions(analyzerModel),
     });
 
-    const responseText = response.choices[0]?.message?.content;
-    if (!responseText) {
-      throw new Error("No response from OpenAI");
-    }
+    await taskRef.update({ completion: patternCompletionMetadata(response) });
 
     const output = normalizePatternConsolidatorOutput(
-      JSON.parse(responseText),
+      parsePatternCompletion(response, 'patterns'),
       fallbackTotalCallCount
     );
     const sanitizedOutput = sanitizeSubagentOutputForFirestore(output);
@@ -1923,6 +1921,7 @@ export async function runAgentAnalysisTask(
     await taskRef.update({
       status: "error",
       error: error.message || "Behavior pattern consolidator failed",
+      errorCode: typeof error.code === "string" ? error.code : "pattern_task_failed",
       model: analyzerModel,
       promptPath,
       completedAt: FieldValue.serverTimestamp(),

@@ -54,6 +54,29 @@ test('admits bounded Scribe word timings without dropping transcript data', () =
   expect(prepared.upperBoundMicros).toBeLessThan(800_000);
 });
 
+test('aggregate report output allowance is selected by server context, not request fields', async () => {
+  const body = { ...requestBody, max_completion_tokens: 50_000, purpose: 'agent_analysis' };
+  expect(boundedDemoCompletion(body).body.max_completion_tokens).toBe(8192);
+  expect(boundedDemoCompletion(body, 'analysis').body.max_completion_tokens).toBe(8192);
+  const report = boundedDemoCompletion(body, 'agent_analysis');
+  expect(report.body.max_completion_tokens).toBe(16384);
+  expect(report.upperBoundMicros).toBeGreaterThan(16384 * 15);
+  expect(boundedDemoCompletion({ ...requestBody, max_completion_tokens: 1000 }, 'agent_analysis').body.max_completion_tokens).toBe(1000);
+  const transport = jest.fn().mockResolvedValue(new Response(JSON.stringify({
+    usage: { prompt_tokens: 100, completion_tokens: 12_000 },
+  }), { status: 200 }));
+  await createDemoOpenAIFetch({ purpose: 'agent_analysis' }, transport)(
+    'https://api.openai.com/v1/chat/completions', { method: 'POST', body: JSON.stringify(body) });
+  expect(JSON.parse(transport.mock.calls[0][1].body).max_completion_tokens).toBe(16384);
+  expect(reserveDemoSpend).toHaveBeenCalledWith(expect.objectContaining({ upperBoundMicros: report.upperBoundMicros }));
+  expect(transport.mock.invocationCallOrder[0]).toBeGreaterThan((reserveDemoSpend as jest.Mock).mock.invocationCallOrder[0]);
+  expect(reconcileDemoSpend).toHaveBeenCalledWith('attempt-1', 180250);
+  (reserveDemoSpend as jest.Mock).mockRejectedValueOnce(new Error('budget exhausted'));
+  await expect(createDemoOpenAIFetch({ purpose: 'agent_analysis' }, transport)(
+    'https://api.openai.com/v1/chat/completions', { method: 'POST', body: JSON.stringify(body) })).rejects.toThrow('budget exhausted');
+  expect(transport).toHaveBeenCalledTimes(1);
+});
+
 test('usage includes full completion/reasoning tokens and rejects missing usage', () => {
   expect(completionUsageMicros('gpt-5.4', { prompt_tokens: 100, completion_tokens: 200 })).toBe(3250);
   expect(completionUsageMicros('gpt-5.4', {})).toBeNull();
