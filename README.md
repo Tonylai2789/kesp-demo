@@ -50,16 +50,35 @@ This is a clean source snapshot. Earlier private operational history, bank
 recordings, source-to-demo mappings, credentials, and generated deployment
 artifacts are not part of its Git history. See [redaction notes](docs/PUBLIC-SOURCE.md).
 
-## Tools
+## Features
 
-| Layer | Tools |
-| --- | --- |
-| Frontend | React, TypeScript, Vite, Tailwind CSS, Radix UI |
-| Hosting and login | Firebase Hosting and Authentication |
-| Backend | Node.js 22, Cloud Functions v2, Cloud Tasks |
-| Data and secrets | Firestore, private Cloud Storage, Secret Manager |
-| Model providers | ElevenLabs Scribe transcription, OpenAI analysis |
-| Media, PDFs, tests | FFmpeg/FFprobe, PDFKit, Jest, Firebase emulators |
+- **Upload and analyze:** submit a recording and follow asynchronous transcription
+  and analysis, subject to the demo's processing allowance.
+- **Review calls and portfolios:** inspect scores, coaching, audio playback, and
+  an agent's call history with privacy masking.
+- **Generate reports:** aggregate recurring coaching patterns across calls, or
+  generate Spanish daily/weekly PDFs from existing results.
+- **Control access and usage:** server-enforced roles, private audio access,
+  request-rate limits, and a shared processing budget.
+
+## Tech Stack
+
+| Layer | Technologies | Role in this project |
+| --- | --- | --- |
+| Web UI | React, TypeScript, Vite | Typed components and a built, browser-based application |
+| Styling and navigation | Tailwind CSS, Radix UI, React Router | Styling, accessible UI primitives, and page routing |
+| Client data | TanStack Query, Firebase SDK | API state and live processing updates from Firestore |
+| Hosting and authentication | Firebase Hosting, Firebase Authentication | Serve the app; Google sign-in and a provisioned password login |
+| Backend and queues | Node.js 22, TypeScript, Cloud Functions v2, Cloud Tasks | Authorized APIs, event triggers, and bounded asynchronous workers |
+| Persistence and secrets | Firestore, private Google Cloud Storage, Secret Manager | Task/results state, audio objects, and provider credentials |
+| AI providers | ElevenLabs Scribe v2, OpenAI | Transcription, per-call analysis, and cross-call pattern detection |
+| Audio and PDF tools | FFmpeg/FFprobe, PDFKit, jsPDF, html2canvas | Audio validation/preparation, server-rendered coaching PDFs, and browser PDF exports |
+| Validation | Jest, Node.js test runner, Firebase emulators, ESLint, TypeScript | Unit tests, authorization tests, linting, and type checks |
+
+The model APIs supply transcription and inference. The application implements
+the surrounding task orchestration, dependency ordering, validation, access
+controls, budget accounting, and report delivery. The flow below shows how
+those pieces connect; production-only ingestion is excluded from this demo.
 
 ## Backend Flow
 
