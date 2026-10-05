@@ -2,11 +2,11 @@ import type { Auth, UserRecord } from 'firebase-admin/auth';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import {
   assertDemoCaller, assertDemoEnrollmentCaller, assertDemoEmailEnabled, assertDemoRequest, assertDemoUid, demoEmail, demoId,
-  DEMO_INITIAL_ROLES, readDemoMember, validateDemoAuthUser, validateDemoMember,
+  readDemoInitialRole, readDemoMember, validateDemoAuthUser, validateDemoMember,
   DEMO_PASSWORD_EMAIL, DEMO_PASSWORD_UID,
 } from '../demoAccess';
 
-const email = 'tonylai2789@gmail.com';
+const email = 'admin@example.com';
 /** Builds synthetic Auth data, with no network or credential dependency. */
 function user(overrides: Partial<UserRecord> = {}): UserRecord {
   return { uid: 'tony', email, disabled: false, emailVerified: true, providerData: [{ providerId: 'google.com', email }], ...overrides } as UserRecord;
@@ -25,7 +25,7 @@ function request(overrides: Record<string, unknown> = {}): CallableRequest {
   return { auth: { uid: 'tony', token: { email, email_verified: true, auth_time: 1900000000, firebase: { sign_in_provider: 'google.com' }, ...overrides } } } as CallableRequest;
 }
 
-describe('demo identity ceiling', () => {
+describe('database-backed demo identity', () => {
   it('allows enrollment without a member but rejects ordinary callables until membership exists', async () => {
     const d = deps(user(), [email], {});
     await expect(assertDemoEnrollmentCaller(request(), d.db, d.auth)).resolves.toMatchObject({ uid: 'tony' });
@@ -43,12 +43,23 @@ describe('demo identity ceiling', () => {
     const d = deps(user(), [email], { uid:'tony', email, organizationId:'consubanco', role:'agent' });
     await expect(assertDemoCaller(request(), d.db, d.auth)).rejects.toMatchObject({code:'permission-denied'});
   });
-  it('has two Google roles and one fixed password supervisor', () => {
-    expect(DEMO_INITIAL_ROLES).toEqual({ 'tonylai2789@gmail.com': 'admin', 'logitech2789@gmail.com': 'supervisor', [DEMO_PASSWORD_EMAIL]: 'supervisor' });
+  it.each(['admin', 'supervisor'])('reads explicit configured initial role %s', (role) => {
+    expect(readDemoInitialRole(email, { emails: [email], initialRoles: { [email]: role } })).toBe(role);
   });
-  it('normalizes case without allowing aliases or third identities', () => {
-    expect(demoEmail(' TonyLai2789@gmail.com ')).toBe(email);
-    for (const value of ['outsider@example.com', 'tonylai2789+demo@gmail.com', undefined, '__proto__']) expect(() => demoEmail(value)).toThrow();
+  it('fails closed without an explicit supported initial role', () => {
+    for (const data of [undefined, {}, { emails: [email] }, { emails: [email], initialRoles: {} }, { emails: [email], initialRoles: { [email]: 'agent' } }, { emails: [email], initialRoles: { [email]: 'owner' } }, { emails: [], initialRoles: { [email]: 'admin' } }]) {
+      expect(() => readDemoInitialRole(email, data)).toThrow();
+    }
+    for (const role of ['admin', 'agent']) {
+      expect(() => readDemoInitialRole(DEMO_PASSWORD_EMAIL, { emails: [DEMO_PASSWORD_EMAIL], initialRoles: { [DEMO_PASSWORD_EMAIL]: role } })).toThrow();
+    }
+    expect(readDemoInitialRole(DEMO_PASSWORD_EMAIL, { emails: [DEMO_PASSWORD_EMAIL], initialRoles: { [DEMO_PASSWORD_EMAIL]: 'supervisor' } })).toBe('supervisor');
+  });
+  it('normalizes arbitrary syntactically valid emails without granting approval', () => {
+    expect(demoEmail(' Admin@Example.com ')).toBe(email);
+    expect(demoEmail('reviewer+demo@example.com')).toBe('reviewer+demo@example.com');
+    expect(demoEmail('new-supervisor@example.com')).toBe('new-supervisor@example.com');
+    for (const value of ['', 'not-an-email', 'a b@example.com', 'a/b@example.com', undefined, '__proto__']) expect(() => demoEmail(value)).toThrow();
   });
   it.each(['../x', 'a/b', '', '..', '.'])('rejects invalid uid %s', (value) => expect(() => demoId(value)).toThrow());
   it.each([
@@ -57,16 +68,23 @@ describe('demo identity ceiling', () => {
     { providerData: [{ providerId: 'google.com', email }, { providerId: 'password', email }] },
     { providerData: [{ providerId: 'google.com', email: 'outsider@example.com' }] },
   ])('rejects unsafe Auth accounts %j', (overrides) => expect(() => validateDemoAuthUser(user(overrides as Partial<UserRecord>))).toThrow());
-  it('cannot widen the fixed ceiling through the stored allowlist', () => {
-    const d = deps(user({ email: 'outsider@example.com' }), ['outsider@example.com']);
-    return expect(assertDemoUid('tony', d.db, d.auth)).rejects.toMatchObject({ code: 'permission-denied' });
+  it('admits an arbitrary verified Google account only with approval and matching live membership', async () => {
+    const other = 'new-supervisor@example.com';
+    const account = user({ email: other, providerData: [{ providerId: 'google.com', email: other }] as UserRecord['providerData'] });
+    const member = { uid: 'tony', email: other, organizationId: 'consubanco', role: 'supervisor' };
+    const approved = deps(account, [other], member);
+    await expect(assertDemoCaller(request({ email: other }), approved.db, approved.auth)).resolves.toMatchObject({ email: other, role: 'supervisor' });
+    const unapproved = deps(account, [], member);
+    await expect(assertDemoCaller(request({ email: other }), unapproved.db, unapproved.auth)).rejects.toMatchObject({ code: 'permission-denied' });
+    const missing = deps(account, [other], {});
+    await expect(assertDemoCaller(request({ email: other }), missing.db, missing.auth)).rejects.toMatchObject({ code: 'permission-denied' });
   });
   it('honors immediate allowlist revocation', async () => {
     const d = deps(user(), []);
     await expect(assertDemoUid('tony', d.db, d.auth)).rejects.toMatchObject({ code: 'permission-denied' });
     expect(() => assertDemoEmailEnabled(email, undefined)).toThrow();
   });
-  it.each([{ email_verified: false }, { firebase: { sign_in_provider: 'anonymous' } }, { firebase: { sign_in_provider: 'password' } }, { email: 'logitech2789@gmail.com' }])('rejects untrusted token %j', async (token) => {
+  it.each([{ email_verified: false }, { firebase: { sign_in_provider: 'anonymous' } }, { firebase: { sign_in_provider: 'password' } }, { email: 'supervisor@example.com' }])('rejects untrusted token %j', async (token) => {
     const d = deps();
     await expect(assertDemoRequest(request(token), d.db, d.auth)).rejects.toMatchObject({ code: 'permission-denied' });
   });

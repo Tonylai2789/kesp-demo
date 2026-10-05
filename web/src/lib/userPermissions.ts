@@ -1,4 +1,4 @@
-import { DEMO_PASSWORD_EMAIL, DEMO_PASSWORD_UID, isDemoEmail } from './demoPolicy.ts';
+import { DEMO_PASSWORD_EMAIL, DEMO_PASSWORD_UID } from './demoPolicy.ts';
 import type { DirectoryUser, Membership, PendingUser, UpdateUserAccessInput, UserAccessRole, UserDirectory } from '../services/userPermissions';
 
 export interface DirectoryRow { user: DirectoryUser; membership?: Membership }
@@ -47,23 +47,23 @@ export function prepareAccessUpdate(directory: UserDirectory, target: AccessTarg
   const { membership, user, pending } = target;
   if (input.role !== 'supervisor' && input.role !== 'admin') return { error: 'unsupportedRole' };
   const passwordIdentity = user?.uid === DEMO_PASSWORD_UID && user.email === DEMO_PASSWORD_EMAIL;
-  const googleIdentity = user?.uid !== DEMO_PASSWORD_UID && isDemoEmail(user?.email ?? input.email);
-  if ((!passwordIdentity && !googleIdentity) || input.organizationId !== 'consubanco') return { error: 'denied' };
+  const email = (user?.email ?? input.email).trim().toLowerCase();
+  if (input.organizationId !== 'consubanco' || (!passwordIdentity &&
+      (user?.uid === DEMO_PASSWORD_UID || email === DEMO_PASSWORD_EMAIL))) return { error: 'denied' };
   if (passwordIdentity && input.role !== 'supervisor') return { error: 'unsupportedRole' };
-  if (!user) return { error: 'precondition' };
-  if (user.uid === input.callerUid) return { error: 'selfDemotion' };
+  if (user?.uid === input.callerUid) return { error: 'selfDemotion' };
   if (!input.adminOrganizationIds.includes(input.organizationId)) return { error: 'denied' };
-  if (!user && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())) return { error: 'invalidEmail' };
-  if (user?.uid === input.callerUid && membership?.role === 'admin' && input.role !== 'admin') return { error: 'selfDemotion' };
+  if (email.length > 254 || !/^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(email)) return { error: 'invalidEmail' };
+  if (!user && ((!input.approveEmail && input.accessEnabled !== false) || input.profileId)) return { error: 'precondition' };
   const profile = directory.profiles.find(/** Validates explicit profile selection within its organization. */ (entry) => entry.id === input.profileId && entry.organizationId === input.organizationId && Boolean(entry.salesAgentId));
   if (input.profileId && !profile) return { error: 'profileRequired' };
   return { request: {
     organizationId: input.organizationId,
-    ...(user && (!pending || passwordIdentity) ? { uid: user.uid } : { email: input.email.trim().toLowerCase() }),
+    ...(user ? { uid: user.uid } : { email }),
     role: input.role,
     ...(profile ? { agentAnalysisId: profile.id } : {}),
-    // Plain allowlist entries have no versioned organization assignment yet.
-    expectedVersion: membership?.version ?? (pending?.organizationId ? pending.version : null),
+    // Pending grants carry the config snapshot version, including plain email approvals.
+    expectedVersion: user ? membership?.version ?? null : pending?.version ?? null,
     approveEmail: input.approveEmail,
     ...(input.accessEnabled !== undefined ? { accessEnabled: input.accessEnabled } : {}),
   } };

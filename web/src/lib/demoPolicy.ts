@@ -1,24 +1,16 @@
 export const DEMO_PROJECT_ID = 'kesp-demo-tonylai2789';
-export const DEMO_ADMIN_EMAIL = 'tonylai2789@gmail.com';
-export const DEMO_SUPERVISOR_EMAIL = 'logitech2789@gmail.com';
-export const DEMO_EMAILS = [DEMO_ADMIN_EMAIL, DEMO_SUPERVISOR_EMAIL] as const;
 export const DEMO_PASSWORD_USERNAME = 'demo-supervisor';
 export const DEMO_PASSWORD_EMAIL = 'demo-supervisor@kesp-demo.invalid';
 export const DEMO_PASSWORD_UID = 'kesp-demo-supervisor';
 export const DEMO_MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 export const DEMO_MAX_AUDIO_SECONDS = 300;
 
-/** Fixed allowlist independent of browser settings or writable configuration. */
-export function isDemoEmail(email: string | null | undefined): boolean {
-  return DEMO_EMAILS.some((allowed) => allowed === email?.trim().toLowerCase());
-}
-
-/** An allowed email is insufficient without verified Google authentication. */
+/** Checks identity only; the backend decides whether the account is approved. */
 export function isDemoGoogleIdentity(email: string | null | undefined, verified: boolean, provider: unknown): boolean {
-  return isDemoEmail(email) && verified && provider === 'google.com';
+  return Boolean(email?.trim()) && email?.trim().toLowerCase() !== DEMO_PASSWORD_EMAIL && verified && provider === 'google.com';
 }
 
-/** The reserved password identity is exact; it does not expand the Google allowlist. */
+/** The reserved password identity cannot be substituted with a Google identity. */
 export function isDemoIdentity(uid: string | null | undefined, email: string | null | undefined, verified: boolean, provider: unknown): boolean {
   return (uid !== DEMO_PASSWORD_UID && isDemoGoogleIdentity(email, verified, provider)) ||
     (uid === DEMO_PASSWORD_UID && email === DEMO_PASSWORD_EMAIL && provider === 'password');

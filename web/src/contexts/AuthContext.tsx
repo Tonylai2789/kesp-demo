@@ -15,7 +15,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     let generation = 0;
-    // Firebase Auth supplies the identity; the backend independently enforces the ceiling.
+    // Firebase Auth supplies the identity; the backend enforces DB-managed approval.
     const unsubscribe = onAuthStateChanged(auth, (candidate) => {
       const request = ++generation;
       setUser(null);
@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!isDemoIdentity(candidate.uid, candidate.email, candidate.emailVerified, token.signInProvider)) {
             throw new Error('demo.loginFailed');
           }
-          // The callable provisions only the fixed demo accounts and validates live membership.
+          // The callable checks approval and validates the live demo membership.
           const membership = await ensureConsubancoMembershipForCurrentUser();
           if (!membership.success || membership.uid !== candidate.uid || membership.organizationId !== 'consubanco' ||
               (membership.role !== 'admin' && membership.role !== 'supervisor') ||

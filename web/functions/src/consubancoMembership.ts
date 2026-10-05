@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onEnrollmentCall, type CallableRequest } from "./demoHttps";
 import { CONSUBANCO_ORGANIZATION_ID, CONSUBANCO_ORGANIZATION_NAME } from "./callIdentity";
-import { assertDemoRequest, assertDemoUid, assertDemoEmailEnabled, demoEmail, DEMO_INITIAL_ROLES, validateDemoMember } from './demoAccess';
+import { assertDemoRequest, assertDemoUid, assertDemoEmailEnabled, demoEmail, readDemoInitialRole, validateDemoMember } from './demoAccess';
 
 export interface ConsubancoMembershipMember {
   uid: string;
@@ -101,7 +101,7 @@ export async function readConsubancoAllowedEmails(db: FirebaseFirestore.Firestor
   const doc = await db.collection("config").doc("allowedEmails").get();
   const emails = doc.data()?.emails;
   if (!Array.isArray(emails)) return [];
-  return Object.keys(DEMO_INITIAL_ROLES).filter((email) => emails.some((value) => normalizeConsubancoEmail(value) === email));
+  return [...new Set(emails.filter((value): value is string => typeof value === 'string').map(normalizeConsubancoEmail).filter(Boolean))];
 }
 
 /** Lists Firebase Auth users keyed by normalized email. */
@@ -135,14 +135,15 @@ async function ensureConsubancoOrganization(db: FirebaseFirestore.Firestore): Pr
 }
 
 /** Builds the Firestore member payload for a newly repaired allowlisted user. */
-function memberWriteData(uid: string, email: string): Record<string, unknown> {
+function memberWriteData(uid: string, email: string, role: 'admin' | 'supervisor'): Record<string, unknown> {
   return {
     uid,
     email,
     organizationId: CONSUBANCO_ORGANIZATION_ID,
     organizationName: CONSUBANCO_ORGANIZATION_NAME,
-    role: DEMO_INITIAL_ROLES[demoEmail(email)],
-    source: "demo_fixed_identity",
+    role,
+    accessEnabled: true,
+    source: "demo_approved_email",
     demo: true,
     updatedAt: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp(),
@@ -194,7 +195,8 @@ export async function repairConsubancoMembershipForAllowedEmails(
         organizationEnsured = true;
       }
       /** Calls Firestore to create the missing Consubanco member document. */
-      await memberRef.set(memberWriteData(member.uid, member.email), { merge: false });
+      const allowed = await dependencies.db.doc('config/allowedEmails').get();
+      await memberRef.set(memberWriteData(member.uid, member.email, readDemoInitialRole(member.email, allowed.data())), { merge: false });
     }
     writtenMembers.push(member);
   }
@@ -251,7 +253,7 @@ export async function ensureConsubancoMembershipForAuthUser(
       validateDemoMember(current.data(), dependencies.uid, email);
       return ensureResultFromMemberData({ created: false, uid: dependencies.uid, email, data: current.data() });
     }
-    const data = memberWriteData(dependencies.uid, email);
+    const data = memberWriteData(dependencies.uid, email, readDemoInitialRole(email, allowed.data()));
     transaction.create(memberRef, data);
     return ensureResultFromMemberData({ created: true, uid: dependencies.uid, email, data });
   });

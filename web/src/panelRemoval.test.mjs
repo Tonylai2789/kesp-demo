@@ -31,8 +31,7 @@ function load(path, { language = 'en', role = 'supervisor', suffix = '' } = {}) 
     'react-i18next': { useTranslation: () => ({ t: instance.t.bind(instance), i18n: instance }) },
     '@/contexts/useAuth': { useAuth: () => ({ user: { uid: 'viewer', email: 'admin@example.invalid' }, isEmailAllowed: true }) },
     '@/hooks/useKespTheme': { useKespTheme: () => ({ theme: 'light', toggleTheme: () => {} }) },
-    '@/hooks/useUserPermissionsAccess': { useUserPermissionsAccess: () => ({ adminOrganizationIds: ['consubanco'] }) },
-    '@/lib/demoPolicy': { DEMO_ADMIN_EMAIL: 'admin@example.invalid' },
+    '@/hooks/useUserPermissionsAccess': { useUserPermissionsAccess: () => ({ adminOrganizationIds: role === 'admin' ? ['consubanco'] : [] }) },
     '@/services/organizations': {
       isConsubancoAdminMember: (value) => value.role === 'admin',
       isConsubancoAgentMember: (value) => value.role === 'agent',
@@ -76,6 +75,7 @@ for (const language of ['en', 'es']) {
         for (const path of ['/kesp/analizador', '/kesp/manual-profiles', '/kesp/llamadas', '/kesp/subir', '/kesp/email-reports']) {
           assert.ok(links.includes(path), path);
         }
+        assert.equal(links.includes('/kesp/users'), role === 'admin', 'Users navigation follows backend grants for any email');
       }
     });
   }

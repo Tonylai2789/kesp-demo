@@ -9,9 +9,10 @@ service firebase.storage {
           && request.auth.token.email == 'demo-supervisor@kesp-demo.invalid'
           && request.auth.token.firebase.sign_in_provider == 'password')
         || (request.auth.uid != 'kesp-demo-supervisor'
+          && request.auth.token.email is string
+          && request.auth.token.email != 'demo-supervisor@kesp-demo.invalid'
           && request.auth.token.email_verified == true
-          && request.auth.token.firebase.sign_in_provider == 'google.com'
-          && request.auth.token.email in ['tonylai2789@gmail.com', 'logitech2789@gmail.com']);
+          && request.auth.token.firebase.sign_in_provider == 'google.com');
     }
     function authenticated() {
       return bucket == 'kesp-demo-tonylai2789.firebasestorage.app'

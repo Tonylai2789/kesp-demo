@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { DEMO_PROJECT_ID, DEMO_EMAILS, DEMO_PASSWORD_USERNAME, DEMO_PASSWORD_EMAIL, DEMO_PASSWORD_UID, assertDemoFirebaseConfig, isDemoEmail, isDemoGoogleIdentity, isDemoIdentity, getDemoPasswordEmail, validateDemoAudioLimits } from './demoPolicy.ts';
+import { DEMO_PROJECT_ID, DEMO_PASSWORD_USERNAME, DEMO_PASSWORD_EMAIL, DEMO_PASSWORD_UID, assertDemoFirebaseConfig, isDemoGoogleIdentity, isDemoIdentity, getDemoPasswordEmail, validateDemoAudioLimits } from './demoPolicy.ts';
 import { previousDemoWeek } from './demoReportPeriod.ts';
 import { isKespDemoRedactionEnabled, setKespDemoRedactionEnabled, resetKespDemoRedactionState, maskKespDemoAgentDisplayName, maskKespDemoCallString } from './kespDemoRedaction.ts';
-import { prepareAccessUpdate } from './userPermissions.ts';
+import { prepareAccessUpdate, resolveAccessTarget } from './userPermissions.ts';
 import { CONSUBANCO_AGENT_NAMES, CONSUBANCO_AGENTS } from './consubancoAgents.ts';
+
+const DEMO_EMAILS = ['admin@example.com', 'supervisor@example.com', 'new-reviewer@example.com'];
 
 test('demo source has no prototype roster fixture or legacy recipient defaults', () => {
   assert.equal(existsSync(new URL('../data/kespMock.ts', import.meta.url)), false);
@@ -26,14 +28,13 @@ test('exact isolated configuration passes; missing and foreign identity fields f
   for (const key of Object.keys(config)) assert.throws(() => assertDemoFirebaseConfig({ ...config, [key]: '' }));
   for (const key of ['projectId', 'authDomain', 'storageBucket']) assert.throws(() => assertDemoFirebaseConfig({ ...config, [key]: 'foreign-project' }));
 });
-test('only the two verified Google identities pass', () => {
-  assert.deepEqual(DEMO_EMAILS, ['tonylai2789@gmail.com', 'logitech2789@gmail.com']);
+test('Google identity checks provider and verification, not a frontend approval list', () => {
   for (const email of DEMO_EMAILS) assert.equal(isDemoGoogleIdentity(email.toUpperCase(), true, 'google.com'), true);
-  for (const email of ['third@example.com', null, undefined, '']) assert.equal(isDemoGoogleIdentity(email, true, 'google.com'), false);
+  for (const email of [null, undefined, '', ' ']) assert.equal(isDemoGoogleIdentity(email, true, 'google.com'), false);
   assert.equal(isDemoGoogleIdentity(DEMO_EMAILS[0], false, 'google.com'), false);
   assert.equal(isDemoGoogleIdentity(DEMO_EMAILS[0], true, 'password'), false);
-  assert.equal(isDemoEmail(DEMO_PASSWORD_EMAIL), false);
   assert.equal(isDemoGoogleIdentity(DEMO_PASSWORD_EMAIL, true, 'google.com'), false);
+  assert.equal(isDemoGoogleIdentity(DEMO_PASSWORD_EMAIL.toUpperCase(), true, 'google.com'), false);
 });
 test('only the exact public supervisor username maps to the internal password account', () => {
   assert.equal(DEMO_PASSWORD_USERNAME, 'demo-supervisor');
@@ -58,7 +59,7 @@ test('password identity requires exact UID, email and provider without requiring
     }
   }
 });
-test('broader identity preserves the verified two-account Google ceiling', () => {
+test('new Google identities may reach backend approval without weakening reserved password checks', () => {
   for (const email of DEMO_EMAILS) {
     assert.equal(isDemoIdentity('google-user', email.toUpperCase(), true, 'google.com'), true);
     assert.equal(isDemoIdentity('google-user', email, false, 'google.com'), false);
@@ -66,7 +67,10 @@ test('broader identity preserves the verified two-account Google ceiling', () =>
     assert.equal(isDemoIdentity(DEMO_PASSWORD_UID, email.toUpperCase(), true, 'google.com'), false);
     assert.equal(isDemoIdentity(DEMO_PASSWORD_UID, email, true, 'password'), false);
   }
-  assert.equal(isDemoIdentity('google-user', 'third@example.com', true, 'google.com'), false);
+  assert.equal(isDemoIdentity('google-user', 'third@example.com', true, 'google.com'), true);
+  for (const provider of ['password', 'anonymous', 'custom', undefined]) {
+    assert.equal(isDemoIdentity('google-user', 'third@example.com', true, provider), false);
+  }
 });
 test('auth uses SDK password sign-in, UID-aware authorization and backend membership before publishing', () => {
   const source = readFileSync(new URL('../contexts/AuthContext.tsx', import.meta.url), 'utf8');
@@ -78,6 +82,7 @@ test('auth uses SDK password sign-in, UID-aware authorization and backend member
   assert.match(source, /token.signInProvider === 'password' && membership.role !== 'supervisor'/);
   assert.ok(source.indexOf('await ensureConsubancoMembershipForCurrentUser()') < source.indexOf('setUser(candidate)'));
   assert.match(source, /await signOut\(auth\)/);
+  assert.doesNotMatch(source, /fetchAllowedEmails|DEMO_EMAILS|DEMO_ADMIN_EMAIL/);
   assert.doesNotMatch(source, /console\.|localStorage|sessionStorage|createUserWithEmailAndPassword|sendPasswordResetEmail|failure\.message/);
   const errorSetters = [...source.matchAll(/setError\(([^)]+)\)/g)].map((match) => match[1]);
   assert.ok(errorSetters.every((value) => value === 'null' || value === "'demo.loginFailed'"));
@@ -147,13 +152,13 @@ test('no automation or iteration entry routes and no send dependency in report p
   assert.doesNotMatch(page,/sendAgent|seedIvan|previewAgentEmail|listAgentEmailReportDeliveries/);
   assert.match(page,/generateAgentCoachingReport/); assert.match(page,/listAgentCoachingReportCalls/);
 });
-test('permission edits preserve backend version and cannot add a third email or edit self', () => {
+test('permission edits preserve backend version and require explicit approval for new emails', () => {
   const member = { organizationId: 'consubanco', role: 'supervisor', version: 'v1' };
   const user = { uid: 'other', email: DEMO_EMAILS[1], memberships: [member] };
   const directory = { profiles: [], users: [user], pending: [] };
   const input = { callerUid: 'admin', adminOrganizationIds: ['consubanco'], organizationId: 'consubanco', email: DEMO_EMAILS[1], role: 'supervisor', profileId: '', approveEmail: false };
   assert.equal(prepareAccessUpdate(directory, { user, membership: member }, input).request.expectedVersion, 'v1');
-  assert.equal(prepareAccessUpdate(directory, {}, { ...input, email: 'third@example.com' }).error, 'denied');
+  assert.equal(prepareAccessUpdate(directory, {}, { ...input, email: 'third@example.com' }).error, 'precondition');
   assert.equal(prepareAccessUpdate(directory, { user }, { ...input, callerUid: 'other' }).error, 'selfDemotion');
   assert.equal(prepareAccessUpdate(directory, {}, input).error, 'precondition');
   assert.equal(prepareAccessUpdate(directory, { user, membership: member }, { ...input, accessEnabled: false }).request.accessEnabled, false);
@@ -194,7 +199,7 @@ test('password permission edits cannot elevate roles, bypass admin scope or edit
   assert.deepEqual(prepareAccessUpdate(directory, target, { ...input, callerUid: DEMO_PASSWORD_UID }), { error: 'selfDemotion' });
 });
 
-test('permission edits reject mismatched reserved identity, unprovisioned accounts and unrelated emails', () => {
+test('permission edits reject mismatched or unprovisioned reserved password identity', () => {
   const member = { organizationId: 'consubanco', role: 'supervisor', version: 'password-v1' };
   const directory = { profiles: [], users: [], pending: [] };
   const input = { callerUid: 'admin', adminOrganizationIds: ['consubanco'], organizationId: 'consubanco', email: DEMO_PASSWORD_EMAIL, role: 'supervisor', profileId: '', approveEmail: true };
@@ -202,7 +207,7 @@ test('permission edits reject mismatched reserved identity, unprovisioned accoun
     ['other', DEMO_PASSWORD_EMAIL], ['', DEMO_PASSWORD_EMAIL], [undefined, DEMO_PASSWORD_EMAIL],
     [DEMO_PASSWORD_UID, DEMO_PASSWORD_EMAIL.toUpperCase()],
     [DEMO_PASSWORD_UID, ` ${DEMO_PASSWORD_EMAIL}`], [DEMO_PASSWORD_UID, `${DEMO_PASSWORD_EMAIL} `],
-    [DEMO_PASSWORD_UID, null], [DEMO_PASSWORD_UID, 'third@example.com'], ['other', 'third@example.com'],
+    [DEMO_PASSWORD_UID, null], [DEMO_PASSWORD_UID, 'third@example.com'],
     ...DEMO_EMAILS.map((email) => [DEMO_PASSWORD_UID, email]),
   ];
   for (const [uid, email] of identities) {
@@ -213,7 +218,7 @@ test('permission edits reject mismatched reserved identity, unprovisioned accoun
   assert.deepEqual(prepareAccessUpdate(directory, { pending: { email: DEMO_PASSWORD_EMAIL } }, input), { error: 'denied' });
 });
 
-test('both existing Google directory identities retain admin and supervisor edit support', () => {
+test('arbitrary Google directory identities support admin and supervisor edits', () => {
   for (const email of DEMO_EMAILS) {
     const member = { organizationId: 'consubanco', role: 'supervisor', version: 'google-v1' };
     const user = { uid: `google-${email}`, email, memberships: [member] };
@@ -225,6 +230,80 @@ test('both existing Google directory identities retain admin and supervisor edit
       } });
     }
   }
+});
+
+test('new and pending email grants use normalized email and config snapshot version', () => {
+  const input = { callerUid: 'admin', adminOrganizationIds: ['consubanco'], organizationId: 'consubanco',
+    email: ' New-Reviewer@Example.com ', role: 'supervisor', profileId: '', approveEmail: true, accessEnabled: true };
+  for (const pending of [undefined,
+    { email: 'new-reviewer@example.com', organizationId: 'consubanco', version: 'config-v2' },
+    { email: 'new-reviewer@example.com', organizationId: null, version: 'config-v3' }]) {
+    const directory = { profiles: [], users: [], pending: pending ? [pending] : [] };
+    const target = resolveAccessTarget(directory, pending ? { pending } : null, input.email, input.organizationId);
+    assert.deepEqual(prepareAccessUpdate(directory, target, input), { request: {
+      organizationId: 'consubanco', email: 'new-reviewer@example.com', role: 'supervisor',
+      expectedVersion: pending?.version ?? null, approveEmail: true, accessEnabled: true,
+    } });
+  }
+});
+
+test('new email grants validate syntax, admin scope and approval without granting reserved password access', () => {
+  const directory = { profiles: [], users: [], pending: [] };
+  const input = { callerUid: 'admin', adminOrganizationIds: ['consubanco'], organizationId: 'consubanco',
+    email: 'reviewer@example.com', role: 'supervisor', profileId: '', approveEmail: true };
+  for (const email of ['', ' ', 'missing-at.example.com', 'a@', 'a b@example.com', 'a@@example.com',
+    'reviewer/name@example.com', 'reviewer@example.com/path', 'a'.repeat(243) + '@example.com']) {
+    assert.equal(prepareAccessUpdate(directory, {}, { ...input, email }).error, 'invalidEmail');
+  }
+  for (const email of [DEMO_PASSWORD_EMAIL, DEMO_PASSWORD_EMAIL.toUpperCase(), ` ${DEMO_PASSWORD_EMAIL} `]) {
+    assert.equal(prepareAccessUpdate(directory, {}, { ...input, email }).error, 'denied');
+  }
+  assert.equal(prepareAccessUpdate(directory, {}, { ...input, adminOrganizationIds: [] }).error, 'denied');
+  assert.equal(prepareAccessUpdate(directory, {}, { ...input, organizationId: 'other' }).error, 'denied');
+  assert.equal(prepareAccessUpdate(directory, {}, { ...input, approveEmail: false }).error, 'precondition');
+  assert.equal(prepareAccessUpdate(directory, {}, { ...input, approveEmail: false, accessEnabled: true }).error, 'precondition');
+  assert.equal(prepareAccessUpdate(directory, {}, { ...input, profileId: 'profile' }).error, 'precondition');
+  assert.equal(prepareAccessUpdate(directory, {}, { ...input, role: 'agent' }).error, 'unsupportedRole');
+});
+
+test('pending revocation does not require approval and retains the config snapshot version', () => {
+  const pending = { email: 'reviewer@example.com', organizationId: 'consubanco', version: 'config-v4' };
+  const directory = { profiles: [], users: [], pending: [pending] };
+  const input = { callerUid: 'admin', adminOrganizationIds: ['consubanco'], organizationId: 'consubanco',
+    email: pending.email, role: 'supervisor', profileId: '', approveEmail: false, accessEnabled: false };
+  assert.deepEqual(prepareAccessUpdate(directory, { pending }, input), { request: {
+    organizationId: 'consubanco', email: pending.email, role: 'supervisor', expectedVersion: 'config-v4',
+    approveEmail: false, accessEnabled: false,
+  } });
+  assert.equal(prepareAccessUpdate(directory, { pending }, { ...input, accessEnabled: true }).error, 'precondition');
+});
+
+test('existing Auth targets use UID and membership version even with a pending config entry', () => {
+  const membership = { organizationId: 'consubanco', role: 'supervisor', version: 'member-v1' };
+  const user = { uid: 'reviewer', email: 'reviewer@example.com', memberships: [membership] };
+  const pending = { email: user.email, organizationId: 'consubanco', version: 'config-v2' };
+  const directory = { profiles: [], users: [user], pending: [pending] };
+  const input = { callerUid: 'admin', adminOrganizationIds: ['consubanco'], organizationId: 'consubanco',
+    email: user.email, role: 'supervisor', profileId: '', approveEmail: true };
+  for (const member of [membership, undefined]) {
+    const result = prepareAccessUpdate(directory, { user, membership: member, pending }, input).request;
+    assert.equal(result.uid, user.uid);
+    assert.equal(result.email, undefined);
+    assert.equal(result.expectedVersion, member?.version ?? null);
+  }
+});
+
+test('admin routes and email editor use backend grants without exposing a hardcoded roster', () => {
+  const page = readFileSync(new URL('../pages/kesp/UsersPage.tsx', import.meta.url), 'utf8');
+  const layout = readFileSync(new URL('../components/kesp/KespLayout.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(page + layout, /DEMO_ADMIN_EMAIL|DEMO_EMAILS/);
+  assert.match(layout, /useUserPermissionsAccess\(user\?\.uid\)/);
+  assert.match(page, /!access.adminOrganizationIds.includes\('consubanco'\)/);
+  assert.match(page, /target\?\.pending\?\.email \?\? ''/);
+  assert.match(page, /input type="email" required disabled=\{Boolean\(target\)\}/);
+  assert.match(page, /useState\(!target\?\.user\)/);
+  assert.match(page, /select value=\{profileId\} disabled=\{!resolved.user\}/);
+  assert.match(page, /<label className="kesp-users-checkbox"><input type="checkbox" checked=\{accessEnabled\}/);
 });
 
 test('call details expose recovery navigation only, not direct active/canceled/completed reruns', () => {

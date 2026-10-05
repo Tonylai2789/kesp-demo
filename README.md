@@ -20,6 +20,13 @@ Choose username/password sign-in with **`demo-supervisor`** and the reviewer
 password supplied separately by Tony. The account has supervisor permissions;
 there is no public signup. Passwords and provider keys are not in this repository.
 
+Approved Google accounts can also sign in. Admins manage approvals and roles in
+**Users/Permissions**: Firestore stores approved emails and first-login roles in
+`config/allowedEmails`, and current roles in `organizations/consubanco/members`.
+New invitations provision an unverified, passwordless Firebase Auth record;
+access activates only after verified Google sign-in. Passwords stay in Firebase
+Authentication, never Firestore or this repository. Supervisors cannot change roles.
+
 1. Open **Calls** to inspect completed feedback, scores, and audio evidence.
 2. Open **Call analyzer** or **Manual profiles**, select the reconstructed agent,
    and choose **All** to view its ten historical calls.

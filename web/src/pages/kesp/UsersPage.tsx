@@ -3,7 +3,6 @@ import { useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowLeft, Check, History, Pencil, Plus, RefreshCw, X } from 'lucide-react';
-import { DEMO_ADMIN_EMAIL, DEMO_EMAILS } from '@/lib/demoPolicy';
 import { useAuth } from '@/contexts/useAuth';
 import type { UserPermissionsAccess } from '@/hooks/useUserPermissionsAccess';
 import { useKespTheme } from '@/hooks/useKespTheme';
@@ -24,7 +23,7 @@ export function UsersPage() {
   const { user } = useAuth();
   const { t } = useTranslation();
   if (access.loading) return <main className="main kesp-users"><p role="status">{t('kesp.users.checking')}</p></main>;
-  if (!user || user.email?.toLowerCase() !== DEMO_ADMIN_EMAIL || !access.adminOrganizationIds.includes('consubanco')) return (
+  if (!user || !access.adminOrganizationIds.includes('consubanco')) return (
     <main className="main kesp-users">
       <h1>{t('kesp.users.title')}</h1>
       <p role="alert">{t(`kesp.users.${access.error ? 'accessError' : 'denied'}`)}</p>
@@ -168,12 +167,12 @@ function AccessEditor({ directory, target, uid, access, onClose, onSaved, onConf
 }) {
   const { t } = useTranslation();
   const { theme } = useKespTheme();
-  const [email, setEmail] = useState(target?.user?.email ?? target?.pending?.email ?? DEMO_EMAILS[1]);
+  const [email, setEmail] = useState(target?.user?.email ?? target?.pending?.email ?? '');
   const [organizationId, setOrganizationId] = useState(target?.membership?.organizationId ?? target?.pending?.organizationId ?? access.adminOrganizationIds[0] ?? '');
   const originalRole = target?.membership?.role ?? target?.pending?.role;
   const [role, setRole] = useState<UserAccessRole | ''>(ROLES.includes(originalRole as UserAccessRole) ? originalRole as UserAccessRole : '');
   const [profileId, setProfileId] = useState('');
-  const [approveEmail, setApproveEmail] = useState(target === null);
+  const [approveEmail, setApproveEmail] = useState(!target?.user);
   const [accessEnabled, setAccessEnabled] = useState(target?.user ? !target.user.disabled && target.user.allowed : true);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -217,14 +216,14 @@ function AccessEditor({ directory, target, uid, access, onClose, onSaved, onConf
         {!accessEnabled && <p className="kesp-users-error">{t('kesp.users.staysDisabled')}</p>}
         <p>{t('kesp.users.confirmScope')}</p>
       </div> : <div className="kesp-users-form-fields">
-        <label>{t('kesp.users.email')}<select disabled={Boolean(target)} value={email} onChange={(event) => { setEmail(event.target.value); setProfileId(''); }}>{DEMO_EMAILS.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label>{t('kesp.users.email')}<input type="email" required disabled={Boolean(target)} value={email} onChange={(event) => { setEmail(event.target.value); setProfileId(''); }} /></label>
         <label>{t('kesp.users.organization')}<select required value={organizationId} disabled={Boolean(target?.membership || target?.pending?.organizationId)} onChange={/** Never carries a profile across organizations. */ (event) => { setOrganizationId(event.target.value); setProfileId(''); }}>
           {directory.organizations.filter(/** Restricts assignment choices to current admin grants. */ (entry) => access.adminOrganizationIds.includes(entry.id)).map(/** Displays an authorized organization. */ (entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
         </select></label>
         <p className="kesp-users-muted">{t('kesp.users.currentRole')}: {roleLabel(beforeRole)}</p>
         <label>{t('kesp.users.role')}<select value={role} onChange={/** Selects a supported assignment role. */ (event) => setRole(event.target.value as UserAccessRole)}><option value="" disabled>{t('kesp.users.selectSupportedRole')}</option>{ROLES.map(/** Disables self-demotion options. */ (value) => <option key={value} value={value} disabled={selfAdmin && value !== 'admin'}>{roleLabel(value)}</option>)}</select></label>
         {selfAdmin && <p className="kesp-users-muted">{t('kesp.users.selfDemotion')}</p>}
-        <label>{t('kesp.users.profile')}<select value={profileId} onChange={/** Records only explicit profile edits. */ (event) => setProfileId(event.target.value)}><option value="">{beforeProfile ? t('kesp.users.preserveProfile', { profile: beforeProfileLabel }) : t('kesp.users.noProfile')}</option>{directory.profiles.filter(/** Allows only valid organization-local profiles. */ (profile) => profile.organizationId === organizationId && Boolean(profile.salesAgentId)).map(/** Masks each option by canonical identity without changing its value. */ (profile) => <option key={profile.id} value={profile.id}>{maskKespDemoAgentDisplayName(profile.name, profile.salesAgentId)}</option>)}</select></label>
+        <label>{t('kesp.users.profile')}<select value={profileId} disabled={!resolved.user} onChange={/** Records only explicit profile edits. */ (event) => setProfileId(event.target.value)}><option value="">{beforeProfile ? t('kesp.users.preserveProfile', { profile: beforeProfileLabel }) : t('kesp.users.noProfile')}</option>{directory.profiles.filter(/** Allows only valid organization-local profiles. */ (profile) => profile.organizationId === organizationId && Boolean(profile.salesAgentId)).map(/** Masks each option by canonical identity without changing its value. */ (profile) => <option key={profile.id} value={profile.id}>{maskKespDemoAgentDisplayName(profile.name, profile.salesAgentId)}</option>)}</select></label>
         <label className="kesp-users-checkbox"><input type="checkbox" checked={accessEnabled} onChange={(event) => { setAccessEnabled(event.target.checked); if (event.target.checked) setApproveEmail(true); }} />{t('kesp.users.accessEnabled')}</label>
         <label className="kesp-users-checkbox"><input type="checkbox" disabled={!accessEnabled} checked={approveEmail} onChange={/** Requires an explicit approval decision outside onboarding. */ (event) => setApproveEmail(event.target.checked)} />{t('kesp.users.approveEmail')}</label>
         {prepared.error && <p className="kesp-users-error" role="status">{t(`kesp.users.${prepared.error}`)}</p>}

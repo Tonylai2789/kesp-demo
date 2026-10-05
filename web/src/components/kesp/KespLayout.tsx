@@ -3,7 +3,6 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useTranslation } from 'react-i18next';
 import { LogIn, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
-import { DEMO_ADMIN_EMAIL } from '@/lib/demoPolicy';
 import { useUserPermissionsAccess } from '@/hooks/useUserPermissionsAccess';
 import { useAuth } from '@/contexts/useAuth';
 import { useKespTheme } from '@/hooks/useKespTheme';
@@ -72,7 +71,7 @@ export function KespLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, switchAccountWithGoogle } = useAuth();
-  const permissions = useUserPermissionsAccess(user?.email?.toLowerCase() === DEMO_ADMIN_EMAIL ? user?.uid : undefined);
+  const permissions = useUserPermissionsAccess(user?.uid);
   const currentLanguage = i18n.resolvedLanguage?.startsWith('en') ? 'en' : 'es';
   const { theme, toggleTheme } = useKespTheme();
   const [signingOut, setSigningOut] = useState(false);
@@ -102,11 +101,11 @@ export function KespLayout() {
     /** Builds the KESP nav items visible to the current Consubanco role. */
     () => NAV_ITEMS.filter((item) => {
       if (isConsubancoAgent) return false;
-      if ('adminOnly' in item && item.adminOnly) return user?.email?.toLowerCase() === DEMO_ADMIN_EMAIL && permissions.adminOrganizationIds.includes('consubanco');
+      if ('adminOnly' in item && item.adminOnly) return permissions.adminOrganizationIds.includes('consubanco');
       if ('supervisorOnly' in item && item.supervisorOnly) return isConsubancoSupervisor;
       return true;
     }),
-    [isConsubancoAgent, isConsubancoSupervisor, permissions.adminOrganizationIds, user?.email]
+    [isConsubancoAgent, isConsubancoSupervisor, permissions.adminOrganizationIds]
   );
 
   useEffect(/** Handles role-aware KESP route redirects. */() => {

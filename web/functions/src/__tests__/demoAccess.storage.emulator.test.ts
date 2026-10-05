@@ -12,7 +12,7 @@ if (enabled && (!/^127\.0\.0\.1:\d+$/.test(host ?? '') || !/^127\.0\.0\.1:\d+$/.
   throw new Error('Storage tests require explicit loopback-only emulators.');
 }
 const suite = enabled ? describe : describe.skip;
-const emails: Record<string, string> = { tony: 'tonylai2789@gmail.com', logi: 'logitech2789@gmail.com', third: 'third@example.com' };
+const emails: Record<string, string> = { tony: 'admin@example.com', logi: 'new-supervisor@example.com', third: 'third@example.com' };
 /** Creates tokens accepted only by the in-memory emulator. */
 function token(uid: string, provider = 'google.com') {
   const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -58,9 +58,10 @@ suite('demo Storage rules', () => {
   beforeAll(async () => {
     db = new Firestore({ projectId, host, ssl: false });
     const batch = db.batch();
+    batch.delete(db.doc('organizations/consubanco/members/third'));
     batch.set(db.doc('organizations/consubanco'), { organizationName: 'KESP Demo' });
     batch.set(db.doc('config/allowedEmails'), { emails: [emails.tony, emails.logi] });
-    for (const uid of Object.keys(emails)) {
+    for (const uid of ['tony', 'logi']) {
       batch.set(db.doc('organizations/consubanco/members/' + uid), { uid, email: emails[uid], organizationId: 'consubanco', role: uid === 'logi' ? 'supervisor' : 'admin' });
     }
     await batch.commit();
@@ -89,6 +90,22 @@ suite('demo Storage rules', () => {
     await reservation('provider', 16);
     expect((await upload('prepared-uploads/tony/provider/demo.wav', 'tony', 16, bucket, 'password')).status).toBe(403);
     expect((await upload('prepared-uploads/tony/provider/demo.wav', 'logi')).status).toBe(403);
+  });
+  it('requires live matching membership independently of email approval', async () => {
+    const ref = db.doc('organizations/consubanco/members/logi');
+    const original = (await ref.get()).data()!;
+    const path = 'prepared-uploads/tony/ok/demo.wav';
+    for (const change of [{ accessEnabled: false }, { uid: 'other' }, { email: emails.third }, { organizationId: 'other' }]) {
+      await ref.set({ ...original, ...change });
+      expect((await download(path)).status).toBe(403);
+    }
+    await ref.delete();
+    expect((await download(path)).status).toBe(403);
+    await ref.set(original);
+    await db.doc('config/allowedEmails').update({ emails: [emails.tony] });
+    // The third Firestore lookup is unavailable; revocation must disable membership.
+    expect((await download(path)).status).toBe(200);
+    await db.doc('config/allowedEmails').update({ emails: [emails.tony, emails.logi] });
   });
   it('denies legacy audio writes and other buckets', async () => {
     expect((await upload('audio/unknown/legacy.wav')).status).toBe(403);

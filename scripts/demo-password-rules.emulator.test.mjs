@@ -17,7 +17,7 @@ const { Firestore, Timestamp } = createRequire(join(functions, 'package.json'))(
 const db = new Firestore({ projectId, host, ssl: false });
 const uid = 'kesp-demo-supervisor';
 const email = 'demo-supervisor@kesp-demo.invalid';
-const googleEmails = { tony: 'tonylai2789@gmail.com', logi: 'logitech2789@gmail.com' };
+const googleEmails = { tony: 'admin@example.com', logi: 'supervisor@example.com' };
 const bucket = 'kesp-demo-tonylai2789.firebasestorage.app';
 const memberPath = 'organizations/consubanco/members/' + uid;
 const callId = 'password-rules-call';
@@ -129,6 +129,7 @@ try {
       ['wrong email', { email: 'wrong@kesp-demo.invalid' }],
       ['outsider password identity', { uid: 'password-rules-outsider', email: 'outsider@example.com' }],
       ['reserved UID with Google identity', { email: googleEmails.tony, provider: 'google.com', verified: true }],
+      ['reserved email with Google identity and other UID', { uid: 'password-rules-google', provider: 'google.com', verified: true }],
     ]) {
       await check('denies ' + name + ' even with matching live membership and allowlist', async () => {
         const auth = { ...identity, ...overrides };
@@ -182,7 +183,7 @@ try {
       });
     }
     await check('denies Users/Permissions administration and every direct access-policy write', async () => {
-      for (const path of ['adminUsers/x', 'permissions/x', 'config/permissions',
+      for (const path of ['adminUsers/x', 'permissions/x', 'config/permissions', 'config/allowedEmails',
         'organizations/consubanco/members/tony', 'organizations/consubanco/access_audit/password-rules',
         'organizations/consubanco/permissions/x', 'user_access_pending/' + uid]) {
         await status(await firestore(path), 403, 'admin read ' + path);

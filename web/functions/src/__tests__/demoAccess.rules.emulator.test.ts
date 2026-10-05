@@ -5,7 +5,7 @@ const host = process.env.FIRESTORE_EMULATOR_HOST;
 const projectId = 'demo-kesp-auth';
 if (enabled && !/^127\.0\.0\.1:\d+$/.test(host ?? '')) throw new Error('An explicit loopback emulator is required.');
 const suite = enabled ? describe : describe.skip;
-const emails: Record<string, string> = { tony: 'tonylai2789@gmail.com', logi: 'logitech2789@gmail.com', third: 'third@example.com' };
+const emails: Record<string, string> = { tony: 'admin@example.com', logi: 'supervisor@example.com', third: 'third@example.com', approved: 'new-supervisor@example.com' };
 
 /** Generates emulator-only JWTs for exercising actual Firestore client rules. */
 function token(uid: string, extra: Record<string, unknown> = {}) {
@@ -29,7 +29,7 @@ suite('demo Firestore access rules', () => {
   beforeAll(async () => {
     db = new Firestore({ projectId, host, ssl: false });
     const batch = db.batch();
-    batch.set(db.doc('config/allowedEmails'), { emails: Object.values(emails) });
+    batch.set(db.doc('config/allowedEmails'), { emails: [emails.tony, emails.logi, emails.approved] });
     for (const uid of Object.keys(emails)) {
       batch.set(db.doc('organizations/consubanco/members/' + uid), { uid, email: emails[uid], organizationId: 'consubanco', role: uid === 'logi' ? 'supervisor' : 'admin' });
     }
@@ -37,9 +37,30 @@ suite('demo Firestore access rules', () => {
     await batch.commit();
   }, 30000);
   afterAll(async () => { await db.terminate(); });
-  it('admits a staff org-visible manual call and rejects a third email despite forged admin membership', async () => {
+  it('admits approved arbitrary Google staff and rejects unapproved membership', async () => {
     expect((await rest('calls/call', 'logi')).status).toBe(200);
+    expect((await rest('calls/call', 'approved')).status).toBe(200);
     expect((await rest('calls/call', 'third')).status).toBe(403);
+  });
+  it('denies public and authenticated config reads and client self-grants', async () => {
+    const url = 'http://' + host + '/v1/projects/' + projectId + '/databases/(default)/documents/config/allowedEmails';
+    expect((await fetch(url)).status).toBe(403);
+    for (const uid of ['tony', 'third']) {
+      expect((await rest('config/allowedEmails', uid)).status).toBe(403);
+      expect((await rest('config/allowedEmails', uid, 'PATCH', { emails: { arrayValue: { values: [{ stringValue: emails.third }] } } })).status).toBe(403);
+      expect((await rest('organizations/consubanco/members/' + uid, uid, 'PATCH', { accessEnabled: { booleanValue: true }, role: { stringValue: 'admin' } })).status).toBe(403);
+    }
+  });
+  it('requires matching enabled live membership even for approved Google emails', async () => {
+    const ref = db.doc('organizations/consubanco/members/approved');
+    const original = (await ref.get()).data()!;
+    for (const change of [{ accessEnabled: false }, { uid: 'other' }, { email: emails.third }, { organizationId: 'other' }, { role: 'agent' }]) {
+      await ref.set({ ...original, ...change });
+      expect((await rest('calls/call', 'approved')).status).toBe(403);
+    }
+    await ref.delete();
+    expect((await rest('calls/call', 'approved')).status).toBe(403);
+    await ref.set(original);
   });
   it('admits shared manual activity and snapshots without CCC provenance', async () => {
     await db.doc('agent_activity/tony__fictional').set({uploadedBy:'tony',salesAgentId:'fictional',

@@ -6,9 +6,10 @@ service cloud.firestore {
           && request.auth.token.email == 'demo-supervisor@kesp-demo.invalid'
           && request.auth.token.firebase.sign_in_provider == 'password')
         || (request.auth.uid != 'kesp-demo-supervisor'
+          && request.auth.token.email is string
+          && request.auth.token.email != 'demo-supervisor@kesp-demo.invalid'
           && request.auth.token.email_verified == true
-          && request.auth.token.firebase.sign_in_provider == 'google.com'
-          && request.auth.token.email in ['tonylai2789@gmail.com', 'logitech2789@gmail.com']);
+          && request.auth.token.firebase.sign_in_provider == 'google.com');
     }
 
     // Helper function to check if user is authenticated
@@ -401,8 +402,8 @@ service cloud.firestore {
 
     // Config collection - writable only via Firebase Console
     match /config/{doc} {
-      // allowedEmails must be readable before sign-in (used by AuthContext on mount)
-      allow read: if doc == 'allowedEmails';
+      // Access policy is backend-owned and never exposed to browser clients.
+      allow read: if false;
       allow write: if false;
     }
 

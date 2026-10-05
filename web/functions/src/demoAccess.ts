@@ -4,18 +4,13 @@ import { HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 export const DEMO_ORGANIZATION_ID = 'consubanco';
 export const DEMO_PASSWORD_UID = 'kesp-demo-supervisor';
 export const DEMO_PASSWORD_EMAIL = 'demo-supervisor@kesp-demo.invalid';
-export const DEMO_INITIAL_ROLES = {
-  'tonylai2789@gmail.com': 'admin',
-  'logitech2789@gmail.com': 'supervisor',
-  [DEMO_PASSWORD_EMAIL]: 'supervisor',
-} as const;
-export type DemoEmail = keyof typeof DEMO_INITIAL_ROLES;
+export type DemoEmail = string;
 export type DemoRole = 'admin' | 'supervisor' | 'agent';
 
-/** Canonicalizes email comparisons without allowing aliases outside the ceiling. */
+/** Normalizes identity only; Firestore, not this parser, grants access. */
 export function demoEmail(value: unknown): DemoEmail {
   const email = typeof value === 'string' ? value.trim().toLowerCase() : '';
-  if (!Object.prototype.hasOwnProperty.call(DEMO_INITIAL_ROLES, email)) {
+  if (email.length > 254 || !/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(email)) {
     throw new HttpsError('permission-denied', 'This account is not enabled for the demo.');
   }
   return email as DemoEmail;
@@ -29,11 +24,21 @@ export function demoId(value: unknown): string {
   return value;
 }
 
-/** Requires the mutable allowlist as well as the immutable identity ceiling. */
+/** Requires an explicit server-managed email approval. */
 export function assertDemoEmailEnabled(email: DemoEmail, data: FirebaseFirestore.DocumentData | undefined): void {
   if (!Array.isArray(data?.emails) || !data.emails.some((value: unknown) => typeof value === 'string' && value.trim().toLowerCase() === email)) {
     throw new HttpsError('permission-denied', 'Demo access has been revoked.');
   }
+}
+
+/** First login requires an explicit role; existing memberships remain authoritative. */
+export function readDemoInitialRole(email: DemoEmail, data: FirebaseFirestore.DocumentData | undefined): 'admin' | 'supervisor' {
+  assertDemoEmailEnabled(email, data);
+  const role = Object.prototype.hasOwnProperty.call(data?.initialRoles ?? {}, email) ? data?.initialRoles[email] : undefined;
+  if ((role !== 'admin' && role !== 'supervisor') || (email === DEMO_PASSWORD_EMAIL && role !== 'supervisor')) {
+    throw new HttpsError('permission-denied', 'An explicit demo role must be approved before first sign-in.');
+  }
+  return role;
 }
 
 /** Validates the current Auth account, not user-controlled membership identity fields. */
